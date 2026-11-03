@@ -1,506 +1,1307 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   getCategories,
   getDistricts,
+  getDashboardStats,
   sendOTP,
   verifyOTP,
   submitSubmission,
 } from "./services/api";
 
-const C = {
-  navy: "#102957",
-  blue: "#10509a",
-  teal: "#078c89",
-  pale: "#f3f9ff",
-  border: "#e2e8f0",
-  muted: "#64748b",
-  green: "#047857",
+const styles = `
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root {
+  font-family: 'DM Sans', sans-serif;
+  color: #142b3b;
+  background: #f5f8f8;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: #f5f8f8; }
+button, input, select, textarea { font: inherit; }
+
+.page { min-height: 100vh; overflow: hidden; }
+
+.topbar {
+  height: 78px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 max(5.5vw, 24px);
+  border-bottom: 1px solid #e8eeee;
+  position: relative;
+  z-index: 2;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  font: 800 21px Manrope, sans-serif;
+  letter-spacing: -.7px;
+  color: #153b4b;
+}
+
+.brandmark {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: #0c8d83;
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 21px;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  color: #536773;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.nav a { color: inherit; text-decoration: none; }
+
+.lang {
+  border: 1px solid #dce7e6;
+  border-radius: 9px;
+  padding: 9px 12px;
+  background: #fff;
+  color: #29434e;
+}
+
+.hero {
+  background: linear-gradient(115deg, #083c4a 0%, #0a5960 60%, #0c7772 100%);
+  color: #fff;
+  padding: 66px max(7vw, 24px) 78px;
+  position: relative;
+  min-height: 380px;
+}
+
+.hero-inner {
+  max-width: 1150px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: 1.1fr .9fr;
+  align-items: center;
+  gap: 30px;
+  position: relative;
+  z-index: 1;
+}
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #a8e4d8;
+  font-weight: 700;
+}
+
+.hero h1 {
+  font: 800 clamp(34px, 4.5vw, 55px)/1.12 Manrope, sans-serif;
+  letter-spacing: -1.8px;
+  margin: 17px 0 16px;
+  max-width: 620px;
+}
+
+.hero p {
+  color: #d2e9e6;
+  line-height: 1.75;
+  max-width: 530px;
+  font-size: 15px;
+  margin: 0;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 27px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  border: 0;
+  border-radius: 9px;
+  padding: 13px 19px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.btn-primary {
+  background: #f4c96b;
+  color: #173d48;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid #8ab9b5;
+  color: white;
+}
+
+.btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.art {
+  height: 230px;
+  position: relative;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+}
+
+.sun {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: #f4c96b;
+  right: 20%;
+  top: 0;
+  opacity: .95;
+}
+
+.hill {
+  position: absolute;
+  bottom: 0;
+  border-radius: 100% 100% 0 0;
+}
+
+.hill.one {
+  height: 125px;
+  width: 110%;
+  background: #0e8b80;
+  left: -5%;
+}
+
+.hill.two {
+  height: 88px;
+  width: 100%;
+  background: #39a89a;
+  left: 5%;
+  opacity: .85;
+}
+
+.building {
+  position: absolute;
+  bottom: 43px;
+  background: #eaf5ee;
+  border-radius: 5px 5px 0 0;
+  width: 62px;
+  height: 112px;
+  left: 33%;
+  box-shadow: inset 0 -7px #d4e7df;
+}
+
+.building:before {
+  content: '';
+  position: absolute;
+  inset: 14px 12px;
+  background:
+    repeating-linear-gradient(90deg, #75b8ad 0 8px, transparent 8px 18px),
+    repeating-linear-gradient(0deg, transparent 0 17px, #75b8ad 17px 24px);
+}
+
+.building.b2 {
+  height: 78px;
+  width: 48px;
+  left: 56%;
+  background: #fff0d3;
+}
+
+.building.b2:before {
+  background:
+    repeating-linear-gradient(90deg, #d4a95a 0 7px, transparent 7px 16px),
+    repeating-linear-gradient(0deg, transparent 0 15px, #d4a95a 15px 21px);
+}
+
+.content {
+  max-width: 1120px;
+  margin: -35px auto 0;
+  padding: 0 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.stat {
+  background: #fff;
+  border: 1px solid #e8eeee;
+  border-radius: 14px;
+  padding: 21px 22px;
+  box-shadow: 0 8px 24px #163f4a0a;
+}
+
+.stat small {
+  color: #71838a;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.stat strong {
+  display: block;
+  font: 800 27px Manrope, sans-serif;
+  margin-top: 8px;
+  color: #123f4c;
+}
+
+.stat span {
+  font-size: 11px;
+  color: #0c9283;
+}
+
+.section { padding: 56px 0 15px; }
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 18px;
+  margin-bottom: 23px;
+}
+
+.section h2 {
+  font: 800 27px Manrope, sans-serif;
+  letter-spacing: -.7px;
+  margin: 0;
+  color: #173c49;
+}
+
+.section-head p {
+  margin: 7px 0 0;
+  color: #72828a;
+  font-size: 13px;
+}
+
+.filters {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.field, select, textarea {
+  width: 100%;
+  border: 1px solid #dce6e5;
+  border-radius: 9px;
+  background: #fff;
+  padding: 12px 13px;
+  color: #183a45;
+  outline: none;
+}
+
+.filters select {
+  width: auto;
+  min-width: 145px;
+  padding: 9px 12px;
+  font-size: 12px;
+}
+
+.field:focus, select:focus, textarea:focus {
+  border-color: #0b9588;
+  box-shadow: 0 0 0 3px #0b95881a;
+}
+
+.categories {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 13px;
+}
+
+.category {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff;
+  border: 1px solid #e6eeee;
+  border-radius: 12px;
+  padding: 17px;
+}
+
+.cat-icon {
+  width: 43px;
+  height: 43px;
+  border-radius: 12px;
+  background: #e5f5f1;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+}
+
+.category strong {
+  display: block;
+  font-size: 14px;
+}
+
+.category small {
+  color: #829198;
+  font-size: 11px;
+  display: block;
+  margin-top: 4px;
+}
+
+.form-wrap {
+  margin: 56px 0 70px;
+  background: #fff;
+  border: 1px solid #e5eeee;
+  border-radius: 17px;
+  box-shadow: 0 12px 36px #173f4a0a;
+  display: grid;
+  grid-template-columns: .78fr 1.22fr;
+  overflow: hidden;
+}
+
+.form-intro {
+  background: #e8f5f1;
+  padding: 36px;
+}
+
+.form-intro .eyebrow { color: #0a8a7c; }
+
+.form-intro h2 {
+  font: 800 28px/1.2 Manrope;
+  margin: 15px 0;
+  color: #173f49;
+}
+
+.form-intro p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #607a7b;
+}
+
+.secure {
+  margin-top: 25px;
+  color: #0b8177;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.form-body { padding: 34px; }
+
+.form-body h3 {
+  font: 800 20px Manrope;
+  margin: 0 0 7px;
+}
+
+.subtext {
+  color: #788990;
+  font-size: 12px;
+  margin: 0 0 22px;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.form-group { margin-bottom: 15px; }
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #405963;
+  margin-bottom: 7px;
+}
+
+.otp-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 9px;
+}
+
+.status {
+  font-size: 12px;
+  margin: 9px 0;
+  color: #0b8277;
+}
+
+.error { color: #bf4b42; }
+
+.locked {
+  opacity: .55;
+  pointer-events: none;
+}
+
+.submit {
+  background: #087f77;
+  color: white;
+  width: 100%;
+  margin-top: 5px;
+}
+
+.footer {
+  background: #103d49;
+  color: #d6e7e5;
+  padding: 27px max(5.5vw, 24px);
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  font-size: 12px;
+}
+
+.footer strong { color: #fff; }
+
+@media (max-width: 760px) {
+  .topbar { height: 68px; }
+  .nav { gap: 12px; }
+  .nav a { display: none; }
+  .hero { padding-top: 48px; }
+  .hero-inner { grid-template-columns: 1fr; }
+  .art {
+    height: 170px;
+    max-width: 400px;
+    width: 100%;
+    margin: auto;
+  }
+  .hero h1 { font-size: 38px; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .section-head {
+    align-items: start;
+    flex-direction: column;
+  }
+  .categories { grid-template-columns: 1fr 1fr; }
+  .form-wrap { grid-template-columns: 1fr; }
+  .form-intro { padding: 27px; }
+  .form-body { padding: 25px; }
+  .footer { flex-direction: column; }
+}
+
+@media (max-width: 470px) {
+  .categories { grid-template-columns: 1fr; }
+  .grid2 { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 33px; }
+  .stats { gap: 9px; }
+  .stat { padding: 16px; }
+  .stat strong { font-size: 23px; }
+  .filters select {
+    flex: 1;
+    min-width: 0;
+  }
+  .otp-row { grid-template-columns: 1fr; }
+  .lang {
+    padding: 8px;
+    font-size: 11px;
+  }
+}
+`;
+
+const getList = (result) => {
+  if (Array.isArray(result)) return result;
+  if (Array.isArray(result?.data)) return result.data;
+  if (Array.isArray(result?.categories)) return result.categories;
+  if (Array.isArray(result?.districts)) return result.districts;
+  if (Array.isArray(result?.items)) return result.items;
+  return [];
 };
 
-function App() {
+const getId = (item) =>
+  item?.districtId ??
+  item?.categoryId ??
+  item?.subcategoryId ??
+  item?.constituencyId ??
+  item?.id ??
+  item?._id ??
+  item?.value ??
+  item?.code ??
+  "";
+
+const getName = (item) =>
+  item?.districtEn ??
+  item?.categoryEn ??
+  item?.subcategoryEn ??
+  item?.constituencyEn ??
+  item?.name ??
+  item?.title ??
+  item?.label ??
+  item?.category_name ??
+  item?.district_name ??
+  "";
+
+export default function App() {
   const [categories, setCategories] = useState([]);
   const [districts, setDistricts] = useState([]);
-  const [submitting, setSubmitting] = useState(false);
-  const [submissionMessage, setSubmissionMessage] = useState("");
-  const [otp, setOtp] = useState("");
+const [dashboardStats, setDashboardStats] = useState({
+  totalSubmissions: 0,
+  districtWise: [],
+  constituencyWise: [],
+  categoryWise: [],
+});
+  const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(false);
+  const [verified, setVerified] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
-  const [otpMessage, setOtpMessage] = useState("");
-  const [language, setLanguage] = useState("en");
+
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("success");
+
+  const [language, setLanguage] = useState("English");
   const [mobile, setMobile] = useState("");
+  const [otp, setOtp] = useState("");
+
   const [district, setDistrict] = useState("");
   const [constituency, setConstituency] = useState("");
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
   const [description, setDescription] = useState("");
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [categoryData, districtData] = await Promise.all([
-          getCategories(),
-          getDistricts(),
-        ]);
-        setCategories(categoryData);
-        setDistricts(districtData);
-      } catch (error) {
-        console.error("Data loading error:", error);
-      }
+  const [districtFilter, setDistrictFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+
+
+
+
+
+useEffect(() => {
+  const fetchDashboardStats = async () => {
+    try {
+      const stats = await getDashboardStats();
+      setDashboardStats(stats);
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
     }
-    loadData();
+  };
+
+  fetchDashboardStats();
+}, []); 
+
+
+
+
+
+  // Load categories and districts from API
+  useEffect(() => {
+    let active = true;
+
+    Promise.all([getCategories(), getDistricts()])
+      .then(([categoryResult, districtResult]) => {
+        if (!active) return;
+
+        setCategories(getList(categoryResult));
+        setDistricts(getList(districtResult));
+      })
+      .catch(() => {
+        if (active) {
+          setMessage(
+            "Unable to load categories or districts. Please refresh the page."
+          );
+          setMessageType("error");
+        }
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const constituencies = districts.filter((item) => item.districtId === district);
-  const subcategories = categories.filter((item) => item.categoryId === category);
+  // Get constituencies based on selected district
+  const selectedDistrict = districts.find(
+    (item) => String(getId(item)) === String(district)
+  );
 
-  const text = {
-    en: {
-      title: "Civic Priorities",
-      subtitle: "Your voice matters. Help us understand your community's needs.",
-      mobile: "Mobile Number",
-      district: "District",
-      constituency: "Assembly Constituency",
-      category: "Category",
-      subcategory: "Subcategory",
-      description: "Describe Your Issue",
-      select: "Select",
-      placeholder: "Enter your 10-digit mobile number",
-      descriptionPlaceholder: "Explain the issue in detail...",
-    },
-    pa: {
-      title: "ਨਾਗਰਿਕ ਤਰਜੀਹਾਂ",
-      subtitle: "ਤੁਹਾਡੀ ਆਵਾਜ਼ ਮਹੱਤਵਪੂਰਨ ਹੈ। ਆਪਣੇ ਇਲਾਕੇ ਦੀਆਂ ਸਮੱਸਿਆਵਾਂ ਸਾਂਝੀਆਂ ਕਰੋ।",
-      mobile: "ਮੋਬਾਈਲ ਨੰਬਰ",
-      district: "ਜ਼ਿਲ੍ਹਾ",
-      constituency: "ਵਿਧਾਨ ਸਭਾ ਹਲਕਾ",
-      category: "ਸ਼੍ਰੇਣੀ",
-      subcategory: "ਉਪ-ਸ਼੍ਰੇਣੀ",
-      description: "ਆਪਣੀ ਸਮੱਸਿਆ ਬਾਰੇ ਦੱਸੋ",
-      select: "ਚੁਣੋ",
-      placeholder: "10 ਅੰਕਾਂ ਦਾ ਮੋਬਾਈਲ ਨੰਬਰ ਦਰਜ ਕਰੋ",
-      descriptionPlaceholder: "ਆਪਣੀ ਸਮੱਸਿਆ ਬਾਰੇ ਵਿਸਥਾਰ ਨਾਲ ਦੱਸੋ...",
-    },
+  const constituencies =
+    selectedDistrict?.constituencies ??
+    selectedDistrict?.assemblies ??
+    selectedDistrict?.assembly_constituencies ??
+    [];
+
+  // Get subcategories based on selected category
+  const selectedCategory = categories.find(
+    (item) => String(getId(item)) === String(category)
+  );
+
+  const subcategories =
+    selectedCategory?.subcategories ??
+    selectedCategory?.children ??
+    [];
+
+  // Filter category cards
+  const filteredCategories = useMemo(() => {
+    if (!categoryFilter) return categories;
+
+    return categories.filter(
+      (item) => String(getId(item)) === String(categoryFilter)
+    );
+  }, [categories, categoryFilter]);
+
+  const showMessage = (text, type = "success") => {
+    setMessage(text);
+    setMessageType(type);
   };
-  const t = text[language];
 
-  async function handleSendOTP() {
+  // Send OTP
+  const handleSendOtp = async () => {
     if (!/^[6-9]\d{9}$/.test(mobile)) {
-      setOtpMessage("Please enter a valid 10-digit mobile number.");
+      showMessage(
+        "Please enter a valid 10-digit Indian mobile number.",
+        "error"
+      );
       return;
     }
+
+    setOtpLoading(true);
+    showMessage("");
+
     try {
-      setOtpLoading(true);
-      setOtpMessage("");
-      await sendOTP(mobile);
+      const response = await sendOTP(mobile);
+
+      if (
+        response?.success === false ||
+        response?.status === "error"
+      ) {
+        throw new Error(
+          response?.message || "Unable to send OTP."
+        );
+      }
+
       setOtpSent(true);
-      setOtpVerified(false);
-      setOtp("");
-      setOtpMessage("OTP sent successfully on WhatsApp.");
-    } catch (error) {
-      setOtpMessage(error.message);
-    } finally {
-      setOtpLoading(false);
-    }
-  }
+      setVerified(false);
 
-  async function handleVerifyOTP() {
-    if (!/^\d{6}$/.test(otp)) {
-      setOtpMessage("Please enter a valid 6-digit OTP.");
-      return;
-    }
-    try {
-      setOtpLoading(true);
-      setOtpMessage("");
-      await verifyOTP(mobile, otp);
-      setOtpVerified(true);
-      setOtpMessage("Mobile number verified successfully.");
-    } catch (error) {
-      setOtpMessage(error.message);
-    } finally {
-      setOtpLoading(false);
-    }
-  }
-
-  async function handleContinue(e) {
-    e.preventDefault();
-    if (!otpVerified) {
-      setSubmissionMessage("Please verify your mobile number first.");
-      return;
-    }
-    if (!district || !constituency || !category || !subcategory || !description.trim()) {
-      setSubmissionMessage("Please complete all required fields.");
-      return;
-    }
-    try {
-      setSubmitting(true);
-      setSubmissionMessage("");
-      const result = await submitSubmission({
-        mobile, district, constituency, category, subcategory,
-        description: description.trim(), language,
-      });
-      setSubmissionMessage(
-        "Your response has been submitted successfully! Reference ID: " + result.submissionId
+      showMessage(
+        response?.message ||
+          "OTP sent successfully. Please check your mobile."
       );
     } catch (error) {
-      setSubmissionMessage(error.message);
+      showMessage(
+        error?.message || "Unable to send OTP. Please try again.",
+        "error"
+      );
     } finally {
-      setSubmitting(false);
+      setOtpLoading(false);
     }
-  }
-
-  const styles = {
-    page: { minHeight: "100vh", overflow: "hidden", background: C.pale, color: C.navy, fontFamily: "Arial, sans-serif" },
-    header: { position: "relative", zIndex: 20, borderBottom: "1px solid #f1f5f9", background: "rgba(255,255,255,.96)" },
-    headerInner: { maxWidth: 1500, margin: "0 auto", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "16px 24px" },
-    logo: { color: C.navy, fontSize: 27, fontWeight: 900, letterSpacing: "-1px", textDecoration: "none" },
-    logoLine: { marginTop: 4, height: 4, width: 64, borderRadius: 20, background: "linear-gradient(90deg,#1e40af,#14b8a6)" },
-    nav: { display: "flex", alignItems: "center", gap: 32, fontSize: 14, fontWeight: 700 },
-    navLink: { color: "#172b50", textDecoration: "none" },
-    languageWrap: { display: "flex", alignItems: "center", gap: 12 },
-    languageBox: { display: "flex", alignItems: "center", border: `1px solid ${C.border}`, borderRadius: 12, background: "white", padding: 4, boxShadow: "0 1px 3px #0000000d" },
-    langButton: (active) => ({ border: 0, borderRadius: 8, padding: "9px 12px", fontSize: 13, fontWeight: 700, cursor: "pointer", background: active ? "#ccfbf1" : "transparent", color: active ? "#115e59" : "#475569" }),
-    signIn: { border: `1px solid ${C.navy}`, borderRadius: 12, padding: "10px 20px", color: C.navy, background: "white", fontWeight: 700, cursor: "pointer" },
-    hero: { position: "relative", overflow: "hidden", background: "linear-gradient(100deg,#fff 0%,#f2faff 55%,#dff3f7 100%)" },
-    heroInner: { position: "relative", maxWidth: 1500, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", alignItems: "center", gap: 20, padding: "58px 24px 68px" },
-    heroContent: { position: "relative", zIndex: 2 },
-    pill: { display: "inline-flex", alignItems: "center", gap: 8, border: "1px solid #ccfbf1", borderRadius: 30, background: "#f0fdfa", padding: "9px 16px", color: "#0f766e", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase" },
-    dot: { height: 8, width: 8, borderRadius: "50%", background: "#14b8a6" },
-    h1: { maxWidth: 680, margin: "22px 0 0", color: C.navy, fontSize: "clamp(36px,5vw,60px)", lineHeight: 1.12, letterSpacing: -1.5, fontWeight: 900 },
-    teal: { color: "#0d9488" },
-    lead: { maxWidth: 560, margin: "20px 0 0", color: "#64748b", fontSize: 19, lineHeight: 1.7 },
-    primaryButton: { display: "inline-flex", alignItems: "center", gap: 16, marginTop: 28, border: 0, borderRadius: 40, background: C.teal, color: "white", padding: "15px 30px", fontSize: 16, fontWeight: 800, cursor: "pointer", boxShadow: "0 8px 20px #99f6e4" },
-    illustration: { position: "relative", display: "flex", minHeight: 340, alignItems: "center", justifyContent: "center" },
-    buildings: { position: "relative", display: "flex", width: "100%", maxWidth: 530, height: 270, alignItems: "flex-end", justifyContent: "center" },
-    building: (height, color, side) => ({ position: "absolute", bottom: 0, [side]: 8, height, width: 104, border: "1px solid #dbeafe", borderRadius: "16px 16px 0 0", background: color, boxShadow: "0 2px 5px #0000000d", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: 12, alignContent: "start" }),
-    window: { height: 23, borderRadius: 3, background: "rgba(255,255,255,.9)" },
-    people: { position: "relative", zIndex: 2, display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 16, marginBottom: 8 },
-    person: { display: "flex", flexDirection: "column", alignItems: "center" },
-    face: (size, bg) => ({ width: size, height: size, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: "4px solid white", background: bg, fontSize: size * .57, boxShadow: "0 3px 8px #00000020" }),
-    body: (width, height, bg) => ({ width, height, marginTop: 4, borderRadius: "36px 36px 0 0", background: bg, boxShadow: "0 3px 8px #00000020" }),
-    floatTag: { position: "absolute", zIndex: 3, border: "1px solid white", borderRadius: 12, background: "rgba(255,255,255,.92)", padding: "11px 14px", boxShadow: "0 5px 15px #00000018", fontSize: 13, fontWeight: 800 },
-    main: { position: "relative", maxWidth: 1350, margin: "-20px auto 0", padding: "0 20px 48px" },
-    card: { overflow: "hidden", border: "1px solid white", borderRadius: 24, background: "white", boxShadow: "0 15px 55px rgba(38,89,150,.12)" },
-    cardInner: { padding: 32 },
-    progress: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: 22, marginBottom: 28 },
-    progressItem: { display: "flex", alignItems: "center", gap: 12 },
-    number: (active, done = false) => ({ width: 44, height: 44, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", background: done ? "#d1fae5" : active ? C.blue : "#e2e8f0", color: done ? "#047857" : active ? "white" : "#64748b", fontSize: 18, fontWeight: 800 }),
-    progressTitle: { margin: 0, color: C.navy, fontSize: 15, fontWeight: 800 },
-    smallMuted: { margin: "4px 0 0", color: "#64748b", fontSize: 12 },
-    progressLine: { flex: 1, height: 1, minWidth: 30, background: "#e2e8f0" },
-    stepBadge: (done) => ({ marginLeft: "auto", borderRadius: 30, padding: "9px 15px", background: done ? "#d1fae5" : "#eff6ff", color: done ? "#047857" : "#1d4ed8", fontSize: 12, fontWeight: 800 }),
-    otpPanel: { border: "1px solid #bfdbfe", borderRadius: 18, background: "linear-gradient(135deg,#eef7ff,#e8f3fc)", padding: 26 },
-    otpGrid: { display: "grid", gridTemplateColumns: "minmax(220px,1.1fr) minmax(0,2fr)", alignItems: "center", gap: 20 },
-    mobileHeading: { display: "flex", alignItems: "center", gap: 16 },
-    phoneIcon: { width: 64, height: 64, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", background: "#dbeafe", fontSize: 30 },
-    mobileTitle: { margin: 0, borderLeft: "2px solid #93c5fd", paddingLeft: 16, color: C.navy, fontSize: 18, fontWeight: 900 },
-    mobileSub: { margin: "5px 0 0", paddingLeft: 18, color: "#64748b", fontSize: 13 },
-    inputRow: { display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 12 },
-    phoneInputWrap: { position: "relative" },
-    prefix: { position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", borderRight: "1px solid #cbd5e1", paddingRight: 12, color: C.navy, fontWeight: 800 },
-    input: { boxSizing: "border-box", width: "100%", minWidth: 0, border: "1px solid #e2e8f0", borderRadius: 12, background: "white", padding: "14px 16px", color: "#1e293b", fontSize: 15, outline: "none" },
-    actionButton: (bg) => ({ minWidth: 170, display: "flex", alignItems: "center", justifyContent: "center", gap: 9, border: 0, borderRadius: 12, background: bg, color: "white", padding: "14px 22px", fontWeight: 800, cursor: "pointer", boxShadow: "0 3px 8px #00000015" }),
-    otpEntry: { display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", alignItems: "end", gap: 16, marginTop: 24, borderTop: "1px solid #bfdbfe", paddingTop: 20 },
-    label: { display: "block", marginBottom: 8, color: C.navy, fontSize: 14, fontWeight: 800 },
-    message: (success) => ({ marginTop: 18, border: `1px solid ${success ? "#a7f3d0" : "#bfdbfe"}`, borderRadius: 12, background: success ? "#ecfdf5" : "#eff6ff", color: success ? "#065f46" : "#1e40af", padding: 13, fontSize: 14, fontWeight: 700 }),
-    verified: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 18, border: "1px solid #a7f3d0", borderRadius: 12, background: "#ecfdf5", color: "#047857", padding: 13, textAlign: "center", fontSize: 14, fontWeight: 800 },
-    sectionHeading: { display: "flex", alignItems: "center", gap: 16, marginBottom: 24 },
-    sectionNumber: { width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", background: C.blue, color: "white", fontSize: 18, fontWeight: 800 },
-    fieldGrid: { display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: "20px 24px" },
-    field: { minWidth: 0 },
-    iconInput: { position: "relative" },
-    fieldIcon: { position: "absolute", left: 15, top: "50%", transform: "translateY(-50%)", fontSize: 18, pointerEvents: "none" },
-    select: { appearance: "none", paddingLeft: 44, paddingRight: 38 },
-    arrow: { position: "absolute", right: 15, top: "50%", transform: "translateY(-50%)", color: "#64748b", pointerEvents: "none" },
-    textarea: { resize: "vertical", paddingLeft: 44, minHeight: 92 },
-    submit: { width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginTop: 28, border: 0, borderRadius: 40, background: C.blue, color: "white", padding: "16px 24px", fontSize: 18, fontWeight: 800, cursor: "pointer", boxShadow: "0 8px 20px #bfdbfe" },
-    footer: { background: "linear-gradient(to bottom,#f3f9ff,#fff)", padding: "10px 20px 32px" },
-    footerInner: { maxWidth: 900, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", gap: 16, color: "#25436e", textAlign: "center", fontSize: 14 },
-    footerLine: { flex: 1, height: 1, background: "#cbd5e1" },
   };
 
-  const disabledButton = { opacity: 0.5, cursor: "not-allowed" };
-  const fieldInputStyle = { ...styles.input };
-  const selectStyle = { ...styles.input, ...styles.select };
+  // Verify OTP
+  const handleVerifyOtp = async () => {
+    if (!/^\d{6}$/.test(otp)) {
+      showMessage("Please enter the 6-digit OTP.", "error");
+      return;
+    }
+
+    setOtpLoading(true);
+
+    try {
+      const response = await verifyOTP(mobile, otp);
+
+      const ok =
+        response === true ||
+        response?.success === true ||
+        response?.verified === true ||
+        response?.status === "success";
+
+      if (!ok) {
+        throw new Error(
+          response?.message || "Invalid OTP. Please try again."
+        );
+      }
+
+      setVerified(true);
+      showMessage("Mobile number verified successfully.");
+    } catch (error) {
+      setVerified(false);
+
+      showMessage(
+        error?.message || "OTP verification failed.",
+        "error"
+      );
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  // Submit civic priority
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!verified) {
+      return showMessage(
+        "Please verify your mobile number before submitting.",
+        "error"
+      );
+    }
+
+    if (
+      !district ||
+      !constituency ||
+      !category ||
+      !subcategory ||
+      !description.trim()
+    ) {
+      return showMessage(
+        "Please complete all required fields.",
+        "error"
+      );
+    }
+
+    setLoading(true);
+
+    try {
+      const payload = {
+        mobile,
+        district,
+        constituency,
+        category,
+        subcategory,
+        description: description.trim(),
+        language,
+      };
+
+      const response = await submitSubmission(payload);
+
+      if (
+        response?.success === false ||
+        response?.status === "error"
+      ) {
+        throw new Error(
+          response?.message || "Submission failed. Please try again."
+        );
+      }
+
+      showMessage(
+        response?.message ||
+          "Your civic priority has been submitted successfully."
+      );
+
+      setDistrict("");
+      setConstituency("");
+      setCategory("");
+      setSubcategory("");
+      setDescription("");
+    } catch (error) {
+      showMessage(
+        error?.message ||
+          "Unable to submit your response. Please try again.",
+        "error"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fallback category cards if API categories are unavailable
+  const categoryCards = [
+    ["🛣️", "Roads & Transport", "312 submissions"],
+    ["💧", "Water & Sanitation", "246 submissions"],
+    ["🏥", "Healthcare", "198 submissions"],
+    ["📚", "Education", "184 submissions"],
+    ["💼", "Jobs & Livelihood", "176 submissions"],
+    ["🛡️", "Public Safety", "168 submissions"],
+  ];
 
   return (
-    <div style={styles.page}>
-      <style>{`
-        * { box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-        button, input, select, textarea { font: inherit; }
-        button { transition: background .2s ease, transform .2s ease, opacity .2s ease; }
-        button:not(:disabled):hover { filter: brightness(.94); }
-        a:hover { color: #0d9488 !important; }
-        input:focus, select:focus, textarea:focus { border-color: #14b8a6 !important; box-shadow: 0 0 0 4px #ccfbf1; }
-        input:disabled, select:disabled { background: #f1f5f9; cursor: not-allowed; }
-        .civic-nav { display:flex; }
-        .civic-progress-line { display:block; }
-        .civic-hero-grid { grid-template-columns:1fr 1fr; }
-        .civic-fields { grid-template-columns:repeat(3,minmax(0,1fr)); }
-        .civic-desc { grid-column:span 2; }
-        @media (max-width: 900px) {
-          .civic-nav { display:none; }
-          .civic-hero-grid { grid-template-columns:1fr; }
-          .civic-illustration { min-height:280px !important; }
-          .civic-fields { grid-template-columns:repeat(2,minmax(0,1fr)); }
-        }
-        @media (max-width: 620px) {
-          .civic-header-inner { padding:14px 16px !important; }
-          .civic-logo { font-size:21px !important; }
-          .civic-hero-inner { padding:42px 18px 48px !important; }
-          .civic-main { padding:0 12px 32px !important; }
-          .civic-card-inner { padding:18px !important; }
-          .civic-otp-panel { padding:17px !important; }
-          .civic-otp-grid, .civic-input-row, .civic-otp-entry { grid-template-columns:1fr !important; }
-          .civic-fields { grid-template-columns:1fr; }
-          .civic-desc { grid-column:span 1; }
-          .civic-action { width:100%; min-width:0 !important; }
-          .civic-step-badge { margin-left:0 !important; }
-          .civic-progress-line { display:none; }
-          .civic-illustration { min-height:250px !important; }
-          .civic-people { gap:7px !important; transform:scale(.88); }
-          .civic-footer-line { display:none; }
-          .civic-footer-inner { flex-direction:column; }
-        }
-      `}</style>
+    <>
+      <style>{styles}</style>
 
-      {/* NAVBAR */}
-      <header style={styles.header}>
-        <div className="civic-header-inner" style={styles.headerInner}>
-          <a href="#" className="civic-logo" style={styles.logo}>
-            CIVIC <span style={styles.teal}>PRIORITIES</span>
-            <div style={styles.logoLine} />
-          </a>
-          <nav className="civic-nav" style={styles.nav}>
-            <a href="#how-it-works" style={styles.navLink}>How it works</a>
-            <a href="#explore-priorities" style={styles.navLink}>Explore priorities</a>
-            <a href="#about" style={styles.navLink}>About</a>
+      <div className="page">
+        {/* Header */}
+        <header className="topbar">
+          <div className="brand">
+            <div className="brandmark">✳</div>
+            <span>Civic Priorities</span>
+          </div>
+
+          <nav className="nav">
+            <a href="#priorities">Priorities</a>
+            <a href="#how-it-works">How it works</a>
+            <a href="#submit">Submit feedback</a>
+
+            <select
+              className="lang"
+              aria-label="Select language"
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+            >
+              <option>English</option>
+              <option>Hindi</option>
+              <option>Punjabi</option>
+            </select>
           </nav>
-          <div style={styles.languageWrap}>
-            <div style={styles.languageBox}>
-              <button type="button" onClick={() => setLanguage("pa")} style={styles.langButton(language === "pa")}>ਪੰਜਾਬੀ</button>
-              <button type="button" onClick={() => setLanguage("pa")} style={styles.langButton(false)}>हिंदी</button>
-              <button type="button" onClick={() => setLanguage("en")} style={styles.langButton(language === "en")}>English</button>
-            </div>
-            <div style={{ height: 30, width: 1, background: "#cbd5e1" }} />
-            <button type="button" style={styles.signIn}>Sign in</button>
-          </div>
-        </div>
-      </header>
+        </header>
 
-      {/* HERO */}
-      <section style={styles.hero}>
-        <div className="civic-hero-grid civic-hero-inner" style={styles.heroInner}>
-          <div style={styles.heroContent}>
-            <span style={styles.pill}><span style={styles.dot} />Your community. Your priorities.</span>
-            <h1 style={styles.h1}>A better manifesto starts with <span style={styles.teal}>your priorities.</span></h1>
-            <p style={styles.lead}>Tell us what needs attention in your neighbourhood.</p>
-            <button type="button" onClick={() => document.getElementById("submission-form")?.scrollIntoView({ behavior: "smooth" })} style={styles.primaryButton}>
-              Share a local issue <span style={{ fontSize: 22 }}>→</span>
-            </button>
-          </div>
+        {/* Hero section */}
+        <section className="hero">
+          <div className="hero-inner">
+            <div>
+              <div className="eyebrow">
+                Your voice. Your neighbourhood. Your future.
+              </div>
 
-          <div className="civic-illustration" style={styles.illustration}>
-            <div style={styles.buildings}>
-              <div style={styles.building(160, "#dcecf1", "left")}>
-                {Array.from({ length: 6 }).map((_, i) => <div key={i} style={styles.window} />)}
-              </div>
-              <div style={styles.building(192, "#c9e5e0", "right")}>
-                {Array.from({ length: 8 }).map((_, i) => <div key={i} style={styles.window} />)}
-              </div>
-              <div className="civic-people" style={styles.people}>
-                <div style={styles.person}><div style={styles.face(64, "#eab89a")}>👩🏻</div><div style={styles.body(80, 96, "#0d9488")} /></div>
-                <div style={styles.person}><div style={styles.face(78, "#d9a17f")}>👳🏻‍♂️</div><div style={styles.body(96, 128, "#163e79")} /></div>
-                <div style={styles.person}><div style={styles.face(64, "#b87955")}>👨🏻</div><div style={styles.body(80, 96, "#047857")} /></div>
-              </div>
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 8, borderRadius: 20, background: "#99f6e4" }} />
-              <div style={{ ...styles.floatTag, left: 5, top: 12, color: "#0f766e" }}>🏡 Better communities</div>
-              <div style={{ ...styles.floatTag, right: 0, top: 52, color: "#1e40af" }}>🤝 Your voice matters</div>
-            </div>
-          </div>
-        </div>
-      </section>
+              <h1>
+                Let's build a better community, together.
+              </h1>
 
-      {/* MAIN FORM */}
-      <main id="submission-form" className="civic-main" style={styles.main}>
-        <div style={styles.card}>
-          <div className="civic-card-inner" style={styles.cardInner}>
-            <div style={styles.progress}>
-              <div style={styles.progressItem}>
-                <div style={styles.number(!otpVerified, otpVerified)}>{otpVerified ? "✓" : "1"}</div>
-                <div><h3 style={styles.progressTitle}>Mobile Verification</h3><p style={styles.smallMuted}>Verify your WhatsApp number to continue</p></div>
+              <p>
+                Share the issues that matter most in your neighbourhood.
+                Your feedback helps shape local priorities and create
+                meaningful change.
+              </p>
+
+              <div className="hero-actions">
+                <a href="#submit">
+                  <button className="btn btn-primary">
+                    Share your priority&nbsp; →
+                  </button>
+                </a>
+
+                <a href="#priorities">
+                  <button className="btn btn-outline">
+                    Explore priorities
+                  </button>
+                </a>
               </div>
-              <div className="civic-progress-line" style={styles.progressLine} />
-              <div style={styles.progressItem}>
-                <div style={styles.number(otpVerified)}>{2}</div>
-                <div><h3 style={styles.progressTitle}>Submission Details</h3><p style={styles.smallMuted}>Share your community's priorities</p></div>
-              </div>
-              <span className="civic-step-badge" style={styles.stepBadge(otpVerified)}>{otpVerified ? "Step 2 of 2" : "Step 1 of 2"}</span>
             </div>
 
-            <form onSubmit={handleContinue}>
-              <div className="civic-otp-panel" style={styles.otpPanel}>
-                <div className="civic-otp-grid" style={styles.otpGrid}>
-                  <div style={styles.mobileHeading}>
-                    <div style={styles.phoneIcon}>📱</div>
+            {/* CSS city illustration */}
+            <div className="art" aria-hidden="true">
+              <div className="sun"></div>
+              <div className="hill one"></div>
+              <div className="hill two"></div>
+              <div className="building"></div>
+              <div className="building b2"></div>
+            </div>
+          </div>
+        </section>
+
+        <main className="content">
+          {/* Statistics */}
+          <div className="stats">
+  <div className="stat">
+    <small>Total community submissions</small>
+    <strong>
+      {dashboardStats.totalSubmissions.toLocaleString("en-IN")}
+    </strong>
+    <span>↑ Community voices count</span>
+  </div>
+
+  <div className="stat">
+    <small>Priority categories</small>
+    <strong>{categories.length.toString().padStart(2, "0")}</strong>
+    <span>Across local services</span>
+  </div>
+
+  <div className="stat">
+    <small>District coverage</small>
+    <strong>{districts.length || "—"}</strong>
+    <span>Participating districts</span>
+  </div>
+
+  <div className="stat">
+    <small>Open participation</small>
+    <strong>24/7</strong>
+    <span>Share anytime, anywhere</span>
+  </div>
+</div>
+
+          {/* Community priorities */}
+          <section className="section" id="priorities">
+            <div className="section-head">
+              <div>
+                <h2>What matters to your community?</h2>
+                <p>
+                  Explore the most discussed civic priorities.
+                </p>
+              </div>
+
+              <div className="filters">
+                <select
+                  aria-label="Filter by district"
+                  value={districtFilter}
+                  onChange={(e) =>
+                    setDistrictFilter(e.target.value)
+                  }
+                >
+                  <option value="">All districts</option>
+
+                  {districts.map((d) => (
+                    <option key={getId(d)} value={getId(d)}>
+                      {getName(d)}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  aria-label="Filter by category"
+                  value={categoryFilter}
+                  onChange={(e) =>
+                    setCategoryFilter(e.target.value)
+                  }
+                >
+                  <option value="">All categories</option>
+
+                  {categories.map((c) => (
+                    <option key={getId(c)} value={getId(c)}>
+                      {getName(c)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="categories">
+              {(filteredCategories.length
+                ? filteredCategories
+                : categoryCards
+              ).map((item, index) => {
+                const isApiItem = !Array.isArray(item);
+
+                const title = isApiItem
+                  ? getName(item)
+                  : item[1];
+
+                const count = isApiItem
+                  ? item.count ??
+                    item.submission_count ??
+                    "Community priority"
+                  : item[2];
+
+                const icon = isApiItem
+                  ? item.icon ??
+                    ["🛣️", "💧", "🏥", "📚", "💼", "🛡️"][
+                      index % 6
+                    ]
+                  : item[0];
+
+                return (
+                  <div
+                    className="category"
+                    key={isApiItem ? getId(item) : title}
+                  >
+                    <div className="cat-icon">{icon}</div>
+
                     <div>
-                      <label style={styles.mobileTitle}>{t.mobile}</label>
-                      <p style={styles.mobileSub}>Enter your 10-digit mobile number</p>
+                      <strong>{title}</strong>
+                      <small>{count}</small>
                     </div>
                   </div>
-                  <div className="civic-input-row" style={styles.inputRow}>
-                    <div style={styles.phoneInputWrap}>
-                      <span style={styles.prefix}>+91</span>
-                      <input
-                        type="tel"
-                        value={mobile}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, "").slice(0, 10);
-                          setMobile(value);
-                          setOtpSent(false); setOtpVerified(false); setOtp("");
-                          setOtpMessage(""); setDistrict(""); setConstituency("");
-                          setCategory(""); setSubcategory(""); setDescription("");
-                          setSubmissionMessage("");
-                        }}
-                        placeholder={t.placeholder}
-                        maxLength={10}
-                        disabled={otpVerified || otpLoading}
-                        required
-                        style={{ ...fieldInputStyle, height: 52, paddingLeft: 78 }}
-                      />
-                    </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* How it works */}
+          <section className="section" id="how-it-works">
+            <div className="section-head">
+              <div>
+                <h2>Your feedback makes a difference</h2>
+                <p>
+                  A simple, secure way to help improve the places
+                  we call home.
+                </p>
+              </div>
+            </div>
+
+            <div className="categories">
+              <div className="category">
+                <div className="cat-icon">📱</div>
+                <div>
+                  <strong>1. Verify your number</strong>
+                  <small>
+                    Confirm your mobile number with a secure OTP.
+                  </small>
+                </div>
+              </div>
+
+              <div className="category">
+                <div className="cat-icon">📝</div>
+                <div>
+                  <strong>2. Share your priority</strong>
+                  <small>
+                    Choose a location and tell us what needs attention.
+                  </small>
+                </div>
+              </div>
+
+              <div className="category">
+                <div className="cat-icon">🤝</div>
+                <div>
+                  <strong>3. Make an impact</strong>
+                  <small>
+                    Your input helps inform community decisions.
+                  </small>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Submission form */}
+          <section className="form-wrap" id="submit">
+            <aside className="form-intro">
+              <div className="eyebrow">Be part of the change</div>
+
+              <h2>Your voice can shape tomorrow.</h2>
+
+              <p>
+                Tell us about the civic issue or improvement that
+                matters to you. Every submission helps build a clearer
+                picture of community needs.
+              </p>
+
+              <div className="secure">
+                🔒 &nbsp;Secure OTP-based verification
+              </div>
+            </aside>
+
+            <form className="form-body" onSubmit={handleSubmit}>
+              <h3>Submit your civic priority</h3>
+
+              <p className="subtext">
+                Fields marked with * are required.
+              </p>
+
+              {/* Mobile number */}
+              <div className="form-group">
+                <label htmlFor="mobile">Mobile number *</label>
+
+                <div className="otp-row">
+                  <input
+                    id="mobile"
+                    className="field"
+                    inputMode="numeric"
+                    maxLength={10}
+                    placeholder="Enter 10-digit mobile number"
+                    value={mobile}
+                    disabled={verified}
+                    onChange={(e) => {
+                      setMobile(
+                        e.target.value.replace(/\D/g, "").slice(0, 10)
+                      );
+                      setOtpSent(false);
+                      setVerified(false);
+                      setOtp("");
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    disabled={otpLoading || verified}
+                    onClick={handleSendOtp}
+                  >
+                    {otpLoading
+                      ? "Please wait…"
+                      : otpSent
+                      ? "Resend OTP"
+                      : "Send OTP"}
+                  </button>
+                </div>
+              </div>
+
+              {/* OTP verification */}
+              {otpSent && !verified && (
+                <div className="form-group">
+                  <label htmlFor="otp">Enter OTP *</label>
+
+                  <div className="otp-row">
+                    <input
+                      id="otp"
+                      className="field"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="6-digit OTP"
+                      value={otp}
+                      onChange={(e) =>
+                        setOtp(
+                          e.target.value.replace(/\D/g, "").slice(0, 6)
+                        )
+                      }
+                    />
+
                     <button
                       type="button"
-                      onClick={handleSendOTP}
-                      disabled={otpLoading || otpVerified || !/^[6-9]\d{9}$/.test(mobile)}
-                      className="civic-action"
-                      style={{ ...styles.actionButton(C.blue), ...(otpLoading || otpVerified || !/^[6-9]\d{9}$/.test(mobile) ? disabledButton : {}) }}
+                      className="btn btn-primary"
+                      disabled={otpLoading}
+                      onClick={handleVerifyOtp}
                     >
-                      <span>➤</span>{otpLoading ? "Please wait..." : otpSent ? "Resend OTP" : "Send OTP"}
+                      {otpLoading ? "Verifying…" : "Verify OTP"}
                     </button>
                   </div>
-                </div>
-
-                {otpSent && !otpVerified && (
-                  <div className="civic-otp-entry" style={styles.otpEntry}>
-                    <div>
-                      <label style={styles.label}>Enter 6-Digit OTP</label>
-                      <input
-                        type="text" inputMode="numeric" maxLength={6} value={otp}
-                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                        placeholder="Enter OTP received on WhatsApp"
-                        style={{ ...fieldInputStyle, letterSpacing: 5 }}
-                      />
-                    </div>
-                    <button type="button" onClick={handleVerifyOTP} disabled={otpLoading || otp.length !== 6} className="civic-action"
-                      style={{ ...styles.actionButton("#0d9488"), ...(otpLoading || otp.length !== 6 ? disabledButton : {}) }}>
-                      <span>✓</span>{otpLoading ? "Verifying..." : "Verify OTP"}
-                    </button>
-                  </div>
-                )}
-
-                {otpMessage && <div style={styles.message(otpVerified)}>{otpVerified ? "✓ " : "ℹ "}{otpMessage}</div>}
-                {otpVerified && <div style={styles.verified}><span style={{ fontSize: 18 }}>✓</span>Mobile number verified successfully. You can now fill the form.</div>}
-              </div>
-
-              {otpVerified && (
-                <div style={{ marginTop: 30 }}>
-                  <div style={styles.sectionHeading}>
-                    <div style={styles.sectionNumber}>2</div>
-                    <div><h2 style={{ ...styles.progressTitle, fontSize: 18 }}>Submission Details</h2><p style={{ ...styles.smallMuted, fontSize: 13 }}>Share your community's priorities</p></div>
-                    <div className="civic-progress-line" style={styles.progressLine} />
-                  </div>
-
-                  <div className="civic-fields" style={styles.fieldGrid}>
-                    <div style={styles.field}>
-                      <label style={styles.label}>{t.district}</label>
-                      <div style={styles.iconInput}>
-                        <span style={styles.fieldIcon}>📍</span>
-                        <select value={district} onChange={(e) => { setDistrict(e.target.value); setConstituency(""); }} required style={selectStyle}>
-                          <option value="">{t.select} {t.district}</option>
-                          {districts.map((item) => <option key={item.districtId} value={item.districtId}>{language === "pa" ? item.districtPa : item.districtEn}</option>)}
-                        </select>
-                        <span style={styles.arrow}>▼</span>
-                      </div>
-                    </div>
-
-                    <div style={styles.field}>
-                      <label style={styles.label}>{t.constituency}</label>
-                      <div style={styles.iconInput}>
-                        <span style={styles.fieldIcon}>🏛️</span>
-                        <select value={constituency} onChange={(e) => setConstituency(e.target.value)} required disabled={!district} style={selectStyle}>
-                          <option value="">{t.select} {t.constituency}</option>
-                          {constituencies.map((item) => <option key={item.constituencyId} value={item.constituencyId}>{language === "pa" ? item.constituencyPa : item.constituencyEn}</option>)}
-                        </select>
-                        <span style={styles.arrow}>▼</span>
-                      </div>
-                    </div>
-
-                    <div style={styles.field}>
-                      <label style={styles.label}>{t.category}</label>
-                      <div style={styles.iconInput}>
-                        <span style={styles.fieldIcon}>▦</span>
-                        <select value={category} onChange={(e) => { setCategory(e.target.value); setSubcategory(""); }} required style={selectStyle}>
-                          <option value="">{t.select} {t.category}</option>
-                          {categories.map((item) => <option key={item.categoryId} value={item.categoryId}>{language === "pa" ? item.categoryPa : item.categoryEn}</option>)}
-                        </select>
-                        <span style={styles.arrow}>▼</span>
-                      </div>
-                    </div>
-
-                    <div style={styles.field}>
-                      <label style={styles.label}>{t.subcategory}</label>
-                      <div style={styles.iconInput}>
-                        <span style={styles.fieldIcon}>☷</span>
-                        <select value={subcategory} onChange={(e) => setSubcategory(e.target.value)} required disabled={!category} style={selectStyle}>
-                          <option value="">{t.select} {t.subcategory}</option>
-                          {subcategories.map((item) => <option key={item.subcategoryId} value={item.subcategoryId}>{language === "pa" ? item.subcategoryPa : item.subcategoryEn}</option>)}
-                        </select>
-                        <span style={styles.arrow}>▼</span>
-                      </div>
-                    </div>
-
-                    <div className="civic-desc" style={styles.field}>
-                      <label style={styles.label}>{t.description}</label>
-                      <div style={{ position: "relative" }}>
-                        <span style={{ ...styles.fieldIcon, top: 17, transform: "none" }}>✎</span>
-                        <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t.descriptionPlaceholder} rows={3} required maxLength={2000}
-                          style={{ ...fieldInputStyle, ...styles.textarea }} />
-                        <span style={{ position: "absolute", bottom: 10, right: 14, color: "#94a3b8", fontSize: 12 }}>{description.length}/2000</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button type="submit" disabled={submitting} style={{ ...styles.submit, ...(submitting ? disabledButton : {}) }}>
-                    <span>➤</span>{submitting ? "Submitting Response..." : "Submit Response"}<span style={{ fontSize: 22 }}>→</span>
-                  </button>
-
-                  {submissionMessage && (
-                    <div style={{
-                      marginTop: 18, border: `1px solid ${submissionMessage.includes("successfully") ? "#a7f3d0" : "#fecaca"}`,
-                      borderRadius: 12, background: submissionMessage.includes("successfully") ? "#ecfdf5" : "#fef2f2",
-                      color: submissionMessage.includes("successfully") ? "#047857" : "#b91c1c",
-                      padding: 15, textAlign: "center", fontSize: 14, fontWeight: 700,
-                    }}>{submissionMessage}</div>
-                  )}
                 </div>
               )}
-            </form>
-          </div>
-        </div>
-      </main>
 
-      <footer id="about" style={styles.footer}>
-        <div className="civic-footer-inner" style={styles.footerInner}>
-          <div className="civic-footer-line" style={styles.footerLine} />
-          <p><strong>Civic Priorities Portal</strong><span style={{ margin: "0 9px", color: "#94a3b8" }}>|</span>Your voice, your community, your priorities.</p>
-          <div className="civic-footer-line" style={styles.footerLine} />
-        </div>
-      </footer>
-    </div>
+              {verified && (
+                <p className="status">
+                  ✓ Mobile number verified. You can now complete the form.
+                </p>
+              )}
+
+              {message && (
+                <p
+                  className={`status ${
+                    messageType === "error" ? "error" : ""
+                  }`}
+                >
+                  {message}
+                </p>
+              )}
+
+              {/* Fields remain locked until OTP verification */}
+              <div className={verified ? "" : "locked"}>
+                <div className="grid2">
+                  {/* District */}
+                  <div className="form-group">
+                    <label htmlFor="district">District *</label>
+
+                    <select
+                      id="district"
+                      value={district}
+                      onChange={(e) => {
+                        setDistrict(e.target.value);
+                        setConstituency("");
+                      }}
+                      disabled={!verified}
+                    >
+                      <option value="">Select district</option>
+
+                      {districts.map((d) => (
+                        <option
+                          key={getId(d)}
+                          value={getId(d)}
+                        >
+                          {getName(d)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Assembly constituency */}
+                  <div className="form-group">
+                    <label htmlFor="constituency">
+                      Assembly constituency *
+                    </label>
+
+                    <select
+                      id="constituency"
+                      value={constituency}
+                      onChange={(e) =>
+                        setConstituency(e.target.value)
+                      }
+                      disabled={!verified || !district}
+                    >
+                      <option value="">Select constituency</option>
+
+                      {constituencies.map((c) => (
+                        <option
+                          key={getId(c) || c}
+                          value={getId(c) || c}
+                        >
+                          {getName(c) || c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Category */}
+                  <div className="form-group">
+                    <label htmlFor="category">Category *</label>
+
+                    <select
+                      id="category"
+                      value={category}
+                      onChange={(e) => {
+                        setCategory(e.target.value);
+                        setSubcategory("");
+                      }}
+                      disabled={!verified}
+                    >
+                      <option value="">Select category</option>
+
+                      {categories.map((c) => (
+                        <option
+                          key={getId(c)}
+                          value={getId(c)}
+                        >
+                          {getName(c)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Subcategory */}
+                  <div className="form-group">
+                    <label htmlFor="subcategory">
+                      Subcategory *
+                    </label>
+
+                    <select
+                      id="subcategory"
+                      value={subcategory}
+                      onChange={(e) =>
+                        setSubcategory(e.target.value)
+                      }
+                      disabled={!verified || !category}
+                    >
+                      <option value="">Select subcategory</option>
+
+                      {subcategories.map((s) => (
+                        <option
+                          key={getId(s) || s}
+                          value={getId(s) || s}
+                        >
+                          {getName(s) || s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="form-group">
+                  <label htmlFor="description">
+                    Describe your concern or suggestion *
+                  </label>
+
+                  <textarea
+                    id="description"
+                    rows={4}
+                    placeholder="Please describe the issue, its location, and how it affects your community…"
+                    value={description}
+                    onChange={(e) =>
+                      setDescription(e.target.value)
+                    }
+                    disabled={!verified}
+                  />
+                </div>
+
+                <button
+                  className="btn submit"
+                  type="submit"
+                  disabled={!verified || loading}
+                >
+                  {loading
+                    ? "Submitting…"
+                    : "Submit your priority →"}
+                </button>
+              </div>
+            </form>
+          </section>
+        </main>
+
+        {/* Footer */}
+        <footer className="footer">
+          <div>
+            <strong>Civic Priorities</strong>
+            <br />
+            Building stronger communities through participation.
+          </div>
+
+          <div>
+            © {new Date().getFullYear()} Civic Priorities. All rights reserved.
+          </div>
+        </footer>
+      </div>
+    </>
   );
 }
-
-export default App;
-
