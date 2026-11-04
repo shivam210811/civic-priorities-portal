@@ -182,6 +182,110 @@ button, input, select, textarea { font: inherit; }
   .otp-row { grid-template-columns: 1fr; }
   .lang { padding: 8px; font-size: 11px; }
 }
+
+/* How it works: editorial layout, responsive cards and subtle motion */
+.how-section {
+  position: relative;
+  padding: 68px 0 28px;
+  scroll-margin-top: 28px;
+}
+.how-heading { max-width: 720px; margin: 0 auto 34px; text-align: center; }
+.how-heading .eyebrow { color: #0b9285; }
+.how-heading h2 {
+  font: 800 clamp(28px, 3.5vw, 39px)/1.16 Manrope,sans-serif;
+  color: #153d49; letter-spacing: -1.1px; margin: 12px 0;
+}
+.how-heading p { color: #71838a; line-height: 1.8; font-size: 14px; margin: 0 auto; }
+.how-intro {
+  max-width: 900px; margin: 0 auto 30px; padding: 25px 29px;
+  border: 1px solid #d9eeea; border-radius: 17px;
+  background: linear-gradient(120deg,#effaf6,#fff 72%);
+  color: #526d70; line-height: 1.85; font-size: 14px;
+  box-shadow: 0 12px 35px #164d4a0b;
+}
+.how-intro strong { color: #0b706a; }
+.steps-grid {
+  display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 13px;
+  counter-reset: howstep;
+}
+.step-card {
+  position: relative; min-height: 218px; padding: 21px 17px;
+  background: #fff; border: 1px solid #e4eeec; border-radius: 15px;
+  box-shadow: 0 8px 24px #163f4a08;
+  transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+  animation: howFadeUp .65s both;
+}
+.step-card:nth-child(2) { animation-delay: .08s; }
+.step-card:nth-child(3) { animation-delay: .16s; }
+.step-card:nth-child(4) { animation-delay: .24s; }
+.step-card:nth-child(5) { animation-delay: .32s; }
+.step-card:hover { transform: translateY(-7px); border-color: #a8d9cf; box-shadow: 0 17px 35px #164d4a16; }
+.step-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.step-icon {
+  width: 48px; height: 48px; display:grid; place-items:center; border-radius:14px;
+  background:#e8f6f2; font-size:23px;
+}
+.step-number {
+  color:#8aa19e; font:800 12px Manrope,sans-serif; letter-spacing:1px;
+}
+.step-card h3 { color:#173f49; font:800 15px Manrope,sans-serif; margin:0 0 9px; }
+.step-card p { color:#71838a; font-size:12px; line-height:1.75; margin:0; }
+.how-note {
+  display:flex; align-items:flex-start; gap:13px; margin:24px 0 0; padding:18px 21px;
+  border-radius:13px; background:#fff8e9; border:1px solid #f3e5c3;
+  color:#6e603e; font-size:13px; line-height:1.75;
+}
+.how-note .note-icon { font-size:20px; flex:0 0 auto; }
+.next-section {
+  display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:27px;
+}
+.next-card {
+  border:1px solid #e3eeeb; border-radius:16px; padding:24px;
+  background:#fff; box-shadow:0 8px 24px #163f4a08;
+  transition:transform .25s ease, box-shadow .25s ease;
+}
+.next-card:hover { transform:translateY(-4px); box-shadow:0 14px 30px #163f4a12; }
+.next-card h3 { margin:0 0 12px; color:#173f49; font:800 17px Manrope,sans-serif; }
+.next-card p { margin:0; color:#71838a; font-size:13px; line-height:1.85; }
+.language-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+.language-chip {
+  border-radius:999px; padding:7px 11px; background:#eaf6f2;
+  color:#16776e; font-size:11px; font-weight:700;
+}
+.disclaimer {
+  margin-top:18px; padding:23px 25px; border-radius:15px;
+  background:#f0f5f6; border:1px solid #dfe9e9;
+}
+.disclaimer h3 { display:flex; align-items:center; gap:9px; margin:0 0 9px; color:#294c56; font:800 15px Manrope,sans-serif; }
+.disclaimer p { margin:0; color:#6e8087; font-size:12px; line-height:1.85; }
+@keyframes howFadeUp {
+  from { opacity:0; transform:translateY(18px); }
+  to { opacity:1; transform:translateY(0); }
+}
+@keyframes gentleFloat {
+  0%,100% { transform:translateY(0); }
+  50% { transform:translateY(-9px); }
+}
+.sun { animation: gentleFloat 5s ease-in-out infinite; }
+.cat-icon { transition:transform .25s ease, background .25s ease; }
+.category:hover .cat-icon { transform:rotate(-7deg) scale(1.08); background:#d8f1e9; }
+@media(max-width:1000px) {
+  .steps-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media(max-width:760px) {
+  .how-section { padding-top:48px; }
+  .steps-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .next-section { grid-template-columns:1fr; }
+}
+@media(max-width:470px) {
+  .steps-grid { grid-template-columns:1fr; }
+  .step-card { min-height:0; }
+  .how-intro { padding:20px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.01ms !important; }
+}
+
 `;
 
 // Convert common API response wrappers into an array.
@@ -739,36 +843,88 @@ const showMessage = (text, type = "success") => {
             )}
           </section>
 
-          <section className="section" id="how-it-works">
-            <div className="section-head">
-              <div>
-                <h2>Your feedback makes a difference</h2>
-                <p>A simple, secure way to help improve the places we call home.</p>
-              </div>
+          <section className="how-section" id="how-it-works">
+            <div className="how-heading">
+              <div className="eyebrow">A simple way to make your voice heard</div>
+              <h2>How It Works</h2>
+              <p>Five simple steps to share what matters in your neighbourhood and help build a clearer picture of local priorities.</p>
             </div>
 
-            <div className="categories">
-              <div className="category">
-                <div className="cat-icon">📱</div>
-                <div>
-                  <strong>1. Verify your number</strong>
-                  <small>Confirm your mobile number with a secure OTP.</small>
+            <div className="how-intro">
+              <strong>Citizens know best what their City Needs.</strong> CityNeeds Community Reporter gives residents a simple way to share the concerns and ideas that matter in their neighbourhood. Your input helps create a clearer picture of local priorities.
+            </div>
+
+            <div className="steps-grid">
+              <article className="step-card">
+                <div className="step-top">
+                  <div className="step-icon">📍</div>
+                  <span className="step-number">STEP 01</span>
                 </div>
-              </div>
-              <div className="category">
-                <div className="cat-icon">📝</div>
-                <div>
-                  <strong>2. Share your priority</strong>
-                  <small>Choose a location and tell us what needs attention.</small>
+                <h3>Choose your area</h3>
+                <p>Select your district and Assembly constituency so your input can be understood in the right local context.</p>
+              </article>
+
+              <article className="step-card">
+                <div className="step-top">
+                  <div className="step-icon">🔐</div>
+                  <span className="step-number">STEP 02</span>
                 </div>
-              </div>
-              <div className="category">
-                <div className="cat-icon">🤝</div>
-                <div>
-                  <strong>3. Make an impact</strong>
-                  <small>Your input helps inform community decisions.</small>
+                <h3>Verify your identity</h3>
+                <p>Complete the identity verification step. Your verification details will be kept separate from public summaries.</p>
+              </article>
+
+              <article className="step-card">
+                <div className="step-top">
+                  <div className="step-icon">🗺️</div>
+                  <span className="step-number">STEP 03</span>
                 </div>
-              </div>
+                <h3>Tell us where the issue is</h3>
+                <p>Enter your locality or a nearby landmark. You do not need to provide your full address.</p>
+              </article>
+
+              <article className="step-card">
+                <div className="step-top">
+                  <div className="step-icon">💬</div>
+                  <span className="step-number">STEP 04</span>
+                </div>
+                <h3>Share your inputs</h3>
+                <p>Select a category and describe a concern or suggestion. You can submit up to five inputs per month and include a possible solution if you wish.</p>
+              </article>
+
+              <article className="step-card">
+                <div className="step-top">
+                  <div className="step-icon">✅</div>
+                  <span className="step-number">STEP 05</span>
+                </div>
+                <h3>Review and submit</h3>
+                <p>Check your entries before submitting. You will receive a reference number for your submission.</p>
+              </article>
+            </div>
+
+            <div className="how-note">
+              <span className="note-icon">🌐</span>
+              <div><strong>Share in the language you are comfortable with.</strong> You may share your inputs in Punjabi, English of these languages.</div>
+            </div>
+
+            <div className="next-section">
+              <article className="next-card">
+                <h3>🔎 What happens next?</h3>
+                <p>We review and group submissions by constituency. A monthly newsletter summarising the inputs received will be made available in the public domain and sent to the relevant offices. Public summaries will not include your personal verification details.</p>
+              </article>
+
+              <article className="next-card">
+                <h3>🗣️ Your voice matters</h3>
+                <p>Every input helps create a better understanding of the concerns, needs, and ideas shared by residents across their communities.</p>
+                <div className="language-chips">
+                  <span className="language-chip">Punjabi</span>                  
+                  <span className="language-chip">English</span>
+                </div>
+              </article>
+            </div>
+
+            <div className="disclaimer">
+              <h3>⚠️ Disclaimer</h3>
+              <p>CityNeeds Community Reporter is a platform for collecting and sharing citizens’ concerns and suggestions. CityNeeds is not an NGO or a complaints-resolution service. We cannot guarantee that a complaint will be resolved or that a suggestion will be implemented.</p>
             </div>
           </section>
 
