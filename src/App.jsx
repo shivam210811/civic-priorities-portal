@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
 import {
   getCategories,
   getDistricts,
@@ -7,6 +9,50 @@ import {
   verifyOTP,
   submitSubmission,
 } from "./services/api";
+
+/*
+Expected API data (either nested or flat records are supported):
+
+Districts:
+[
+  {
+    districtId: "D01",
+    districtEn: "Ludhiana",
+    constituencies: [
+      { constituencyId: "AC01", constituencyEn: "Ludhiana East" }
+    ]
+  }
+]
+OR flat rows:
+[
+  {
+    districtId: "D01",
+    districtEn: "Ludhiana",
+    constituencyId: "AC01",
+    constituencyEn: "Ludhiana East"
+  }
+]
+
+Categories:
+[
+  {
+    categoryId: "CAT01",
+    categoryEn: "Education",
+    subcategories: [
+      { subcategoryId: "SUB01", subcategoryEn: "School Facilities" }
+    ]
+  }
+]
+OR flat rows:
+[
+  {
+    categoryId: "CAT01",
+    categoryEn: "Education",
+    subcategoryId: "SUB01",
+    subcategoryEn: "School Facilities"
+  }
+]
+*/
 
 const styles = `
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
@@ -17,538 +63,216 @@ const styles = `
   background: #f5f8f8;
   font-synthesis: none;
 }
-
 * { box-sizing: border-box; }
 body { margin: 0; background: #f5f8f8; }
 button, input, select, textarea { font: inherit; }
-
 .page { min-height: 100vh; overflow: hidden; }
-
 .topbar {
-  height: 78px;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 max(5.5vw, 24px);
-  border-bottom: 1px solid #e8eeee;
-  position: relative;
-  z-index: 2;
+  min-height: 78px; background: #fff; display: flex; align-items: center;
+  justify-content: space-between; padding: 12px max(5.5vw, 24px);
+  border-bottom: 1px solid #e8eeee; position: relative; z-index: 2;
 }
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  font: 800 21px Manrope, sans-serif;
-  letter-spacing: -.7px;
-  color: #153b4b;
-}
-
+.brand { display: flex; align-items: center; gap: 11px; font: 800 21px Manrope,sans-serif; color: #153b4b; }
 .brandmark {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: #0c8d83;
-  color: white;
-  display: grid;
-  place-items: center;
-  font-size: 21px;
+  width: 38px; height: 38px; border-radius: 12px; background: #0c8d83;
+  color: white; display: grid; place-items: center; font-size: 21px;
 }
-
-.nav {
-  display: flex;
-  align-items: center;
-  gap: 30px;
-  color: #536773;
-  font-size: 13px;
-  font-weight: 600;
-}
-
+.nav { display: flex; align-items: center; gap: 25px; color: #536773; font-size: 13px; font-weight: 600; }
 .nav a { color: inherit; text-decoration: none; }
-
-.lang {
-  border: 1px solid #dce7e6;
-  border-radius: 9px;
-  padding: 9px 12px;
-  background: #fff;
-  color: #29434e;
-}
-
+.lang { border: 1px solid #dce7e6; border-radius: 9px; padding: 9px 12px; background: #fff; color: #29434e; }
 .hero {
-  background: linear-gradient(115deg, #083c4a 0%, #0a5960 60%, #0c7772 100%);
-  color: #fff;
-  padding: 66px max(7vw, 24px) 78px;
-  position: relative;
-  min-height: 380px;
+  background: linear-gradient(115deg,#083c4a 0%,#0a5960 60%,#0c7772 100%);
+  color: #fff; padding: 66px max(7vw,24px) 78px; min-height: 380px;
 }
-
 .hero-inner {
-  max-width: 1150px;
-  margin: auto;
-  display: grid;
-  grid-template-columns: 1.1fr .9fr;
-  align-items: center;
-  gap: 30px;
-  position: relative;
-  z-index: 1;
+  max-width: 1150px; margin: auto; display: grid; grid-template-columns: 1.1fr .9fr;
+  align-items: center; gap: 30px;
 }
-
-.eyebrow {
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: #a8e4d8;
-  font-weight: 700;
-}
-
-.hero h1 {
-  font: 800 clamp(34px, 4.5vw, 55px)/1.12 Manrope, sans-serif;
-  letter-spacing: -1.8px;
-  margin: 17px 0 16px;
-  max-width: 620px;
-}
-
-.hero p {
-  color: #d2e9e6;
-  line-height: 1.75;
-  max-width: 530px;
-  font-size: 15px;
-  margin: 0;
-}
-
-.hero-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 27px;
-  flex-wrap: wrap;
-}
-
-.btn {
-  border: 0;
-  border-radius: 9px;
-  padding: 13px 19px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: .2s;
-}
-
-.btn-primary {
-  background: #f4c96b;
-  color: #173d48;
-}
-
-.btn-outline {
-  background: transparent;
-  border: 1px solid #8ab9b5;
-  color: white;
-}
-
-.btn:disabled {
-  opacity: .55;
-  cursor: not-allowed;
-}
-
-.art {
-  height: 230px;
-  position: relative;
-  display: flex;
-  align-items: end;
-  justify-content: center;
-}
-
-.sun {
-  position: absolute;
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  background: #f4c96b;
-  right: 20%;
-  top: 0;
-  opacity: .95;
-}
-
-.hill {
-  position: absolute;
-  bottom: 0;
-  border-radius: 100% 100% 0 0;
-}
-
-.hill.one {
-  height: 125px;
-  width: 110%;
-  background: #0e8b80;
-  left: -5%;
-}
-
-.hill.two {
-  height: 88px;
-  width: 100%;
-  background: #39a89a;
-  left: 5%;
-  opacity: .85;
-}
-
-.building {
-  position: absolute;
-  bottom: 43px;
-  background: #eaf5ee;
-  border-radius: 5px 5px 0 0;
-  width: 62px;
-  height: 112px;
-  left: 33%;
-  box-shadow: inset 0 -7px #d4e7df;
-}
-
+.eyebrow { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #a8e4d8; font-weight: 700; }
+.hero h1 { font: 800 clamp(34px,4.5vw,55px)/1.12 Manrope,sans-serif; letter-spacing: -1.8px; margin: 17px 0 16px; max-width: 620px; }
+.hero p { color: #d2e9e6; line-height: 1.75; max-width: 530px; font-size: 15px; margin: 0; }
+.hero-actions { display: flex; gap: 12px; margin-top: 27px; flex-wrap: wrap; }
+.btn { border: 0; border-radius: 9px; padding: 13px 19px; font-weight: 700; cursor: pointer; transition: .2s; }
+.btn-primary { background: #f4c96b; color: #173d48; }
+.btn-outline { background: transparent; border: 1px solid #8ab9b5; color: white; }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+.art { height: 230px; position: relative; display: flex; align-items: end; justify-content: center; }
+.sun { position: absolute; width: 150px; height: 150px; border-radius: 50%; background: #f4c96b; right: 20%; top: 0; }
+.hill { position: absolute; bottom: 0; border-radius: 100% 100% 0 0; }
+.hill.one { height: 125px; width: 110%; background: #0e8b80; left: -5%; }
+.hill.two { height: 88px; width: 100%; background: #39a89a; left: 5%; opacity: .85; }
+.building { position: absolute; bottom: 43px; background: #eaf5ee; border-radius: 5px 5px 0 0; width: 62px; height: 112px; left: 33%; box-shadow: inset 0 -7px #d4e7df; }
 .building:before {
-  content: '';
-  position: absolute;
-  inset: 14px 12px;
-  background:
-    repeating-linear-gradient(90deg, #75b8ad 0 8px, transparent 8px 18px),
-    repeating-linear-gradient(0deg, transparent 0 17px, #75b8ad 17px 24px);
+  content: ''; position: absolute; inset: 14px 12px;
+  background: repeating-linear-gradient(90deg,#75b8ad 0 8px,transparent 8px 18px),
+  repeating-linear-gradient(0deg,transparent 0 17px,#75b8ad 17px 24px);
 }
-
-.building.b2 {
-  height: 78px;
-  width: 48px;
-  left: 56%;
-  background: #fff0d3;
-}
-
+.building.b2 { height: 78px; width: 48px; left: 56%; background: #fff0d3; }
 .building.b2:before {
-  background:
-    repeating-linear-gradient(90deg, #d4a95a 0 7px, transparent 7px 16px),
-    repeating-linear-gradient(0deg, transparent 0 15px, #d4a95a 15px 21px);
+  background: repeating-linear-gradient(90deg,#d4a95a 0 7px,transparent 7px 16px),
+  repeating-linear-gradient(0deg,transparent 0 15px,#d4a95a 15px 21px);
 }
-
-.content {
-  max-width: 1120px;
-  margin: -35px auto 0;
-  padding: 0 24px;
-  position: relative;
-  z-index: 1;
-}
-
-.stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-}
-
-.stat {
-  background: #fff;
-  border: 1px solid #e8eeee;
-  border-radius: 14px;
-  padding: 21px 22px;
-  box-shadow: 0 8px 24px #163f4a0a;
-}
-
-.stat small {
-  color: #71838a;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.stat strong {
-  display: block;
-  font: 800 27px Manrope, sans-serif;
-  margin-top: 8px;
-  color: #123f4c;
-}
-
-.stat span {
-  font-size: 11px;
-  color: #0c9283;
-}
-
+.content { max-width: 1120px; margin: -35px auto 0; padding: 0 24px; position: relative; z-index: 1; }
+.stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+.stat { background: #fff; border: 1px solid #e8eeee; border-radius: 14px; padding: 21px 22px; box-shadow: 0 8px 24px #163f4a0a; }
+.stat small { color: #71838a; font-size: 12px; font-weight: 600; }
+.stat strong { display: block; font: 800 27px Manrope,sans-serif; margin-top: 8px; color: #123f4c; }
+.stat span { font-size: 11px; color: #0c9283; }
 .section { padding: 56px 0 15px; }
-
-.section-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: end;
-  gap: 18px;
-  margin-bottom: 23px;
-}
-
-.section h2 {
-  font: 800 27px Manrope, sans-serif;
-  letter-spacing: -.7px;
-  margin: 0;
-  color: #173c49;
-}
-
-.section-head p {
-  margin: 7px 0 0;
-  color: #72828a;
-  font-size: 13px;
-}
-
-.filters {
-  display: flex;
-  gap: 9px;
-  flex-wrap: wrap;
-}
-
+.section-head { display: flex; justify-content: space-between; align-items: end; gap: 18px; margin-bottom: 23px; }
+.section h2 { font: 800 27px Manrope,sans-serif; letter-spacing: -.7px; margin: 0; color: #173c49; }
+.section-head p { margin: 7px 0 0; color: #72828a; font-size: 13px; }
+.filters { display: flex; gap: 9px; flex-wrap: wrap; }
 .field, select, textarea {
-  width: 100%;
-  border: 1px solid #dce6e5;
-  border-radius: 9px;
-  background: #fff;
-  padding: 12px 13px;
-  color: #183a45;
-  outline: none;
+  width: 100%; border: 1px solid #dce6e5; border-radius: 9px; background: #fff;
+  padding: 12px 13px; color: #183a45; outline: none;
 }
-
-.filters select {
-  width: auto;
-  min-width: 145px;
-  padding: 9px 12px;
-  font-size: 12px;
-}
-
-.field:focus, select:focus, textarea:focus {
-  border-color: #0b9588;
-  box-shadow: 0 0 0 3px #0b95881a;
-}
-
-.categories {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 13px;
-}
-
-.category {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  background: #fff;
-  border: 1px solid #e6eeee;
-  border-radius: 12px;
-  padding: 17px;
-}
-
-.cat-icon {
-  width: 43px;
-  height: 43px;
-  border-radius: 12px;
-  background: #e5f5f1;
-  display: grid;
-  place-items: center;
-  font-size: 20px;
-}
-
-.category strong {
-  display: block;
-  font-size: 14px;
-}
-
-.category small {
-  color: #829198;
-  font-size: 11px;
-  display: block;
-  margin-top: 4px;
-}
-
+.filters select { width: auto; min-width: 145px; padding: 9px 12px; font-size: 12px; }
+.field:focus, select:focus, textarea:focus { border-color: #0b9588; box-shadow: 0 0 0 3px #0b95881a; }
+.categories { display: grid; grid-template-columns: repeat(3,1fr); gap: 13px; }
+.category { display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid #e6eeee; border-radius: 12px; padding: 17px; }
+.cat-icon { width: 43px; height: 43px; border-radius: 12px; background: #e5f5f1; display: grid; place-items: center; font-size: 20px; flex: 0 0 auto; }
+.category strong { display: block; font-size: 14px; }
+.category small { color: #829198; font-size: 11px; display: block; margin-top: 4px; }
 .form-wrap {
-  margin: 56px 0 70px;
-  background: #fff;
-  border: 1px solid #e5eeee;
-  border-radius: 17px;
-  box-shadow: 0 12px 36px #173f4a0a;
-  display: grid;
-  grid-template-columns: .78fr 1.22fr;
-  overflow: hidden;
+  margin: 56px 0 70px; background: #fff; border: 1px solid #e5eeee; border-radius: 17px;
+  box-shadow: 0 12px 36px #173f4a0a; display: grid; grid-template-columns: .78fr 1.22fr; overflow: hidden;
 }
-
-.form-intro {
-  background: #e8f5f1;
-  padding: 36px;
-}
-
+.form-intro { background: #e8f5f1; padding: 36px; }
 .form-intro .eyebrow { color: #0a8a7c; }
-
-.form-intro h2 {
-  font: 800 28px/1.2 Manrope;
-  margin: 15px 0;
-  color: #173f49;
-}
-
-.form-intro p {
-  font-size: 13px;
-  line-height: 1.8;
-  color: #607a7b;
-}
-
-.secure {
-  margin-top: 25px;
-  color: #0b8177;
-  font-size: 12px;
-  font-weight: 700;
-}
-
+.form-intro h2 { font: 800 28px/1.2 Manrope,sans-serif; margin: 15px 0; color: #173f49; }
+.form-intro p { font-size: 13px; line-height: 1.8; color: #607a7b; }
+.secure { margin-top: 25px; color: #0b8177; font-size: 12px; font-weight: 700; }
 .form-body { padding: 34px; }
-
-.form-body h3 {
-  font: 800 20px Manrope;
-  margin: 0 0 7px;
-}
-
-.subtext {
-  color: #788990;
-  font-size: 12px;
-  margin: 0 0 22px;
-}
-
-.grid2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-}
-
-.form-group { margin-bottom: 15px; }
-
-.form-group label {
-  display: block;
-  font-size: 12px;
-  font-weight: 700;
-  color: #405963;
-  margin-bottom: 7px;
-}
-
-.otp-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 9px;
-}
-
-.status {
-  font-size: 12px;
-  margin: 9px 0;
-  color: #0b8277;
-}
-
+.form-body h3 { font: 800 20px Manrope,sans-serif; margin: 0 0 7px; }
+.subtext { color: #788990; font-size: 12px; margin: 0 0 22px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.form-group { margin-bottom: 15px; min-width: 0; }
+.form-group label { display: block; font-size: 12px; font-weight: 700; color: #405963; margin-bottom: 7px; }
+.otp-row { display: grid; grid-template-columns: 1fr auto; gap: 9px; }
+.status { font-size: 12px; margin: 9px 0; color: #0b8277; line-height: 1.5; }
 .error { color: #bf4b42; }
-
-.locked {
-  opacity: .55;
-  pointer-events: none;
-}
-
-.submit {
-  background: #087f77;
-  color: white;
-  width: 100%;
-  margin-top: 5px;
-}
-
-.footer {
-  background: #103d49;
-  color: #d6e7e5;
-  padding: 27px max(5.5vw, 24px);
-  display: flex;
-  justify-content: space-between;
-  gap: 15px;
-  font-size: 12px;
-}
-
+.locked { opacity: .65; }
+.submit { background: #087f77; color: white; width: 100%; margin-top: 5px; }
+.footer { background: #103d49; color: #d6e7e5; padding: 27px max(5.5vw,24px); display: flex; justify-content: space-between; gap: 15px; font-size: 12px; }
 .footer strong { color: #fff; }
-
-@media (max-width: 760px) {
-  .topbar { height: 68px; }
+@media(max-width:760px) {
+  .topbar { min-height: 68px; }
   .nav { gap: 12px; }
   .nav a { display: none; }
   .hero { padding-top: 48px; }
   .hero-inner { grid-template-columns: 1fr; }
-  .art {
-    height: 170px;
-    max-width: 400px;
-    width: 100%;
-    margin: auto;
-  }
+  .art { height: 170px; max-width: 400px; width: 100%; margin: auto; }
   .hero h1 { font-size: 38px; }
-  .stats { grid-template-columns: repeat(2, 1fr); }
-  .section-head {
-    align-items: start;
-    flex-direction: column;
-  }
+  .stats { grid-template-columns: repeat(2,1fr); }
+  .section-head { align-items: start; flex-direction: column; }
   .categories { grid-template-columns: 1fr 1fr; }
   .form-wrap { grid-template-columns: 1fr; }
   .form-intro { padding: 27px; }
   .form-body { padding: 25px; }
   .footer { flex-direction: column; }
 }
-
-@media (max-width: 470px) {
-  .categories { grid-template-columns: 1fr; }
-  .grid2 { grid-template-columns: 1fr; }
+@media(max-width:470px) {
+  .categories, .grid2 { grid-template-columns: 1fr; }
   .hero h1 { font-size: 33px; }
   .stats { gap: 9px; }
   .stat { padding: 16px; }
   .stat strong { font-size: 23px; }
-  .filters select {
-    flex: 1;
-    min-width: 0;
-  }
+  .filters select { flex: 1; min-width: 0; }
   .otp-row { grid-template-columns: 1fr; }
-  .lang {
-    padding: 8px;
-    font-size: 11px;
-  }
+  .lang { padding: 8px; font-size: 11px; }
 }
 `;
 
+// Convert common API response wrappers into an array.
 const getList = (result) => {
   if (Array.isArray(result)) return result;
   if (Array.isArray(result?.data)) return result.data;
   if (Array.isArray(result?.categories)) return result.categories;
   if (Array.isArray(result?.districts)) return result.districts;
   if (Array.isArray(result?.items)) return result.items;
+  if (Array.isArray(result?.result)) return result.result;
   return [];
 };
 
-const getId = (item) =>
-  item?.districtId ??
-  item?.categoryId ??
-  item?.subcategoryId ??
-  item?.constituencyId ??
-  item?.id ??
-  item?._id ??
-  item?.value ??
-  item?.code ??
-  "";
+const firstValue = (item, keys) => {
+  for (const key of keys) {
+    const value = item?.[key];
+    if (value !== undefined && value !== null && value !== "") return value;
+  }
+  return "";
+};
 
-const getName = (item) =>
-  item?.districtEn ??
-  item?.categoryEn ??
-  item?.subcategoryEn ??
-  item?.constituencyEn ??
-  item?.name ??
-  item?.title ??
-  item?.label ??
-  item?.category_name ??
-  item?.district_name ??
-  "";
+const getDistrictId = (item) =>
+  firstValue(item, ["districtId", "district_id", "id", "_id", "code", "value"]);
+
+const getDistrictName = (item) =>
+  firstValue(item, ["districtEn", "district_name", "districtName", "name", "title", "label"]);
+
+const getCategoryId = (item) =>
+  firstValue(item, ["categoryId", "category_id", "id", "_id", "code", "value"]);
+
+const getCategoryName = (item) =>
+  firstValue(item, ["categoryEn", "category_name", "categoryName", "name", "title", "label"]);
+
+const getChildId = (item, type) => {
+  if (type === "constituency") {
+    return firstValue(item, ["constituencyId", "constituency_id", "assemblyId", "assembly_id", "id", "_id", "code", "value"]);
+  }
+  return firstValue(item, ["subcategoryId", "subcategory_id", "id", "_id", "code", "value"]);
+};
+
+const getChildName = (item, type) => {
+  if (type === "constituency") {
+    return firstValue(item, ["constituencyEn", "constituency_name", "constituencyName", "assemblyEn", "assembly_name", "name", "title", "label"]);
+  }
+  return firstValue(item, ["subcategoryEn", "subcategory_name", "subcategoryName", "name", "title", "label"]);
+};
+
+const getChildPunjabi = (item, type) => {
+  if (type === "constituency") {
+    return firstValue(item, ["constituencyPa", "constituency_pa", "assemblyPa"]);
+  }
+  return firstValue(item, ["subcategoryPa", "subcategory_pa"]);
+};
+
+const uniqueById = (items) => {
+  const map = new Map();
+  items.forEach((item) => {
+    const id = String(item.id ?? "");
+    if (id && !map.has(id)) map.set(id, item);
+  });
+  return [...map.values()];
+};
+
+const getNestedArray = (item, keys) => {
+  for (const key of keys) {
+    if (Array.isArray(item?.[key])) return item[key];
+  }
+  return [];
+};
 
 export default function App() {
   const [categories, setCategories] = useState([]);
+  
   const [districts, setDistricts] = useState([]);
-const [dashboardStats, setDashboardStats] = useState({
-  totalSubmissions: 0,
-  districtWise: [],
-  constituencyWise: [],
-  categoryWise: [],
-});
+  const [dashboardStats, setDashboardStats] = useState({
+    totalSubmissions: 0,
+    districtWise: [],
+    constituencyWise: [],
+    categoryWise: [],
+  });
+
+  const [dataLoading, setDataLoading] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [verified, setVerified] = useState(false);
-  const [otpLoading, setOtpLoading] = useState(false);
 
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("success");
 
-  const [language, setLanguage] = useState("English");
+  const [language, setLanguage] = useState("en");
   const [mobile, setMobile] = useState("");
   const [otp, setOtp] = useState("");
 
@@ -561,94 +285,188 @@ const [dashboardStats, setDashboardStats] = useState({
   const [districtFilter, setDistrictFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
 
+const showMessage = (text, type = "success") => {
+  setMessage(text);
+  setMessageType(type);
 
+  if (!text) return;
 
+  const isError = type === "error";
 
+  Swal.fire({
+    icon: isError ? "error" : "success",
+    title: isError ? "Something went wrong" : "Success",
+    text: text,
+    confirmButtonText: "OK",
+    confirmButtonColor: isError ? "#d33" : "#087f77",
+    allowOutsideClick: false,
+  });
+};
 
-useEffect(() => {
-  const fetchDashboardStats = async () => {
-    try {
-      const stats = await getDashboardStats();
-      setDashboardStats(stats);
-    } catch (error) {
-      console.error("Error fetching dashboard stats:", error);
-    }
-  };
-
-  fetchDashboardStats();
-}, []); 
-
-
-
-
-
-  // Load categories and districts from API
+  // Load master data from backend.
   useEffect(() => {
     let active = true;
 
-    Promise.all([getCategories(), getDistricts()])
-      .then(([categoryResult, districtResult]) => {
+    const loadData = async () => {
+      setDataLoading(true);
+      try {
+        const [categoryResult, districtResult, statsResult] = await Promise.all([
+          getCategories(),
+          getDistricts(),
+          getDashboardStats().catch((error) => {
+            console.error("Dashboard stats error:", error);
+            return null;
+          }),
+        ]);
+
         if (!active) return;
 
-        setCategories(getList(categoryResult));
-        setDistricts(getList(districtResult));
-      })
-      .catch(() => {
-        if (active) {
-          setMessage(
-            "Unable to load categories or districts. Please refresh the page."
-          );
-          setMessageType("error");
-        }
-      });
+        const categoryRows = getList(categoryResult);
+        const districtRows = getList(districtResult);
 
+        setCategories(categoryRows);
+        setDistricts(districtRows);
+
+        if (statsResult) {
+          const stats = statsResult?.data ?? statsResult;
+          setDashboardStats((previous) => ({
+            ...previous,
+            ...stats,
+            totalSubmissions: Number(
+              stats?.totalSubmissions ?? stats?.total_submissions ?? previous.totalSubmissions
+            ),
+          }));
+        }
+      } catch (error) {
+        console.error("Master data loading error:", error);
+        if (active) {
+          showMessage(
+            error?.message || "Unable to load categories and districts. Please refresh the page.",
+            "error"
+          );
+        }
+      } finally {
+        if (active) setDataLoading(false);
+      }
+    };
+
+    loadData();
     return () => {
       active = false;
     };
   }, []);
 
-  // Get constituencies based on selected district
-  const selectedDistrict = districts.find(
-    (item) => String(getId(item)) === String(district)
-  );
+  // Unique district list for the dropdown and statistics.
+  const districtOptions = useMemo(() => {
+    const options = districts
+      .map((item) => ({
+        id: getDistrictId(item),
+        name: getDistrictName(item),
+        namePa: firstValue(item, ["districtPa", "district_pa"]),
+      }))
+      .filter((item) => item.id && item.name);
+    return uniqueById(options);
+  }, [districts]);
 
-  const constituencies =
-    selectedDistrict?.constituencies ??
-    selectedDistrict?.assemblies ??
-    selectedDistrict?.assembly_constituencies ??
-    [];
+  // Unique category list for the dropdown and cards.
+  const categoryOptions = useMemo(() => {
+    const options = categories
+      .map((item) => ({
+        id: getCategoryId(item),
+        name: getCategoryName(item),
+        namePa: firstValue(item, ["categoryPa", "category_pa"]),
+        icon: item?.icon,
+        count: item?.count ?? item?.submission_count,
+      }))
+      .filter((item) => item.id && item.name);
+    return uniqueById(options);
+  }, [categories]);
 
-  // Get subcategories based on selected category
-  const selectedCategory = categories.find(
-    (item) => String(getId(item)) === String(category)
-  );
+  // Get all constituencies attached to the selected district.
+  // Supports nested records and flat sheet rows.
+  const constituencies = useMemo(() => {
+    if (!district) return [];
 
-  const subcategories =
-    selectedCategory?.subcategories ??
-    selectedCategory?.children ??
-    [];
+    const rows = [];
+    districts.forEach((districtRow) => {
+      if (String(getDistrictId(districtRow)) !== String(district)) return;
 
-  // Filter category cards
+      const nested = getNestedArray(districtRow, [
+        "constituencies",
+        "assemblies",
+        "assembly_constituencies",
+        "assemblyConstituencies",
+      ]);
+
+      nested.forEach((child) => {
+        rows.push({
+          id: getChildId(child, "constituency"),
+          name: getChildName(child, "constituency"),
+          namePa: getChildPunjabi(child, "constituency"),
+        });
+      });
+
+      // Also supports flat rows where each record contains district + constituency.
+      const flatId = getChildId(districtRow, "constituency");
+      const flatName = getChildName(districtRow, "constituency");
+      if (flatId && flatName) {
+        rows.push({
+          id: flatId,
+          name: flatName,
+          namePa: getChildPunjabi(districtRow, "constituency"),
+        });
+      }
+    });
+
+    return uniqueById(rows.filter((item) => item.id && item.name));
+  }, [districts, district]);
+
+  // Get all subcategories attached to the selected category.
+  // Supports nested records and flat sheet rows.
+  const subcategories = useMemo(() => {
+    if (!category) return [];
+
+    const rows = [];
+    categories.forEach((categoryRow) => {
+      if (String(getCategoryId(categoryRow)) !== String(category)) return;
+
+      const nested = getNestedArray(categoryRow, [
+        "subcategories",
+        "children",
+        "subCategories",
+      ]);
+
+      nested.forEach((child) => {
+        rows.push({
+          id: getChildId(child, "subcategory"),
+          name: getChildName(child, "subcategory"),
+          namePa: getChildPunjabi(child, "subcategory"),
+        });
+      });
+
+      // Also supports flat rows where each record contains category + subcategory.
+      const flatId = getChildId(categoryRow, "subcategory");
+      const flatName = getChildName(categoryRow, "subcategory");
+      if (flatId && flatName) {
+        rows.push({
+          id: flatId,
+          name: flatName,
+          namePa: getChildPunjabi(categoryRow, "subcategory"),
+        });
+      }
+    });
+
+    return uniqueById(rows.filter((item) => item.id && item.name));
+  }, [categories, category]);
+
   const filteredCategories = useMemo(() => {
-    if (!categoryFilter) return categories;
+    if (!categoryFilter) return categoryOptions;
+    return categoryOptions.filter((item) => String(item.id) === String(categoryFilter));
+  }, [categoryOptions, categoryFilter]);
 
-    return categories.filter(
-      (item) => String(getId(item)) === String(categoryFilter)
-    );
-  }, [categories, categoryFilter]);
-
-  const showMessage = (text, type = "success") => {
-    setMessage(text);
-    setMessageType(type);
-  };
-
-  // Send OTP
   const handleSendOtp = async () => {
     if (!/^[6-9]\d{9}$/.test(mobile)) {
-      showMessage(
-        "Please enter a valid 10-digit Indian mobile number.",
-        "error"
-      );
+      showMessage("Please enter a valid 10-digit Indian mobile number.", "error");
       return;
     }
 
@@ -657,34 +475,21 @@ useEffect(() => {
 
     try {
       const response = await sendOTP(mobile);
-
-      if (
-        response?.success === false ||
-        response?.status === "error"
-      ) {
-        throw new Error(
-          response?.message || "Unable to send OTP."
-        );
+      if (response?.success === false || response?.status === "error") {
+        throw new Error(response?.message || "Unable to send OTP.");
       }
 
       setOtpSent(true);
       setVerified(false);
-
-      showMessage(
-        response?.message ||
-          "OTP sent successfully. Please check your mobile."
-      );
+      setOtp("");
+      showMessage(response?.message || "OTP sent successfully. Please check your mobile.");
     } catch (error) {
-      showMessage(
-        error?.message || "Unable to send OTP. Please try again.",
-        "error"
-      );
+      showMessage(error?.message || "Unable to send OTP. Please try again.", "error");
     } finally {
       setOtpLoading(false);
     }
   };
 
-  // Verify OTP
   const handleVerifyOtp = async () => {
     if (!/^\d{6}$/.test(otp)) {
       showMessage("Please enter the 6-digit OTP.", "error");
@@ -692,10 +497,8 @@ useEffect(() => {
     }
 
     setOtpLoading(true);
-
     try {
       const response = await verifyOTP(mobile, otp);
-
       const ok =
         response === true ||
         response?.success === true ||
@@ -703,51 +506,33 @@ useEffect(() => {
         response?.status === "success";
 
       if (!ok) {
-        throw new Error(
-          response?.message || "Invalid OTP. Please try again."
-        );
+        throw new Error(response?.message || "Invalid OTP. Please try again.");
       }
 
       setVerified(true);
       showMessage("Mobile number verified successfully.");
     } catch (error) {
       setVerified(false);
-
-      showMessage(
-        error?.message || "OTP verification failed.",
-        "error"
-      );
+      showMessage(error?.message || "OTP verification failed.", "error");
     } finally {
       setOtpLoading(false);
     }
   };
 
-  // Submit civic priority
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!verified) {
-      return showMessage(
-        "Please verify your mobile number before submitting.",
-        "error"
-      );
+      showMessage("Please verify your mobile number before submitting.", "error");
+      return;
     }
 
-    if (
-      !district ||
-      !constituency ||
-      !category ||
-      !subcategory ||
-      !description.trim()
-    ) {
-      return showMessage(
-        "Please complete all required fields.",
-        "error"
-      );
+    if (!district || !constituency || !category || !subcategory || !description.trim()) {
+      showMessage("Please complete all required fields.", "error");
+      return;
     }
 
     setLoading(true);
-
     try {
       const payload = {
         mobile,
@@ -763,16 +548,14 @@ useEffect(() => {
 
       if (
         response?.success === false ||
-        response?.status === "error"
+        response?.status === "error" ||
+        response?.ok === false
       ) {
-        throw new Error(
-          response?.message || "Submission failed. Please try again."
-        );
+        throw new Error(response?.message || "Submission failed. Please try again.");
       }
 
       showMessage(
-        response?.message ||
-          "Your civic priority has been submitted successfully."
+        response?.message || "Your civic priority has been submitted successfully."
       );
 
       setDistrict("");
@@ -780,10 +563,13 @@ useEffect(() => {
       setCategory("");
       setSubcategory("");
       setDescription("");
+      setMobile("");
+      setOtp("");
+      setOtpSent(false);
+      setVerified(false);
     } catch (error) {
       showMessage(
-        error?.message ||
-          "Unable to submit your response. Please try again.",
+        error?.message || "Unable to submit your response. Please try again.",
         "error"
       );
     } finally {
@@ -791,22 +577,26 @@ useEffect(() => {
     }
   };
 
-  // Fallback category cards if API categories are unavailable
-  const categoryCards = [
-    ["🛣️", "Roads & Transport", "312 submissions"],
-    ["💧", "Water & Sanitation", "246 submissions"],
-    ["🏥", "Healthcare", "198 submissions"],
-    ["📚", "Education", "184 submissions"],
-    ["💼", "Jobs & Livelihood", "176 submissions"],
-    ["🛡️", "Public Safety", "168 submissions"],
+  const fallbackCards = [
+    ["🛣️", "Roads & Transport", "Community priority"],
+    ["💧", "Water & Sanitation", "Community priority"],
+    ["🏥", "Healthcare", "Community priority"],
+    ["📚", "Education", "Community priority"],
+    ["💼", "Jobs & Livelihood", "Community priority"],
+    ["🛡️", "Public Safety", "Community priority"],
   ];
+
+  const categoryCardItems = filteredCategories.length
+    ? filteredCategories
+    : categoryOptions.length === 0
+      ? fallbackCards.map(([icon, name, count]) => ({ icon, name, count }))
+      : [];
 
   return (
     <>
       <style>{styles}</style>
 
       <div className="page">
-        {/* Header */}
         <header className="topbar">
           <div className="brand">
             <div className="brandmark">✳</div>
@@ -814,120 +604,96 @@ useEffect(() => {
           </div>
 
           <nav className="nav">
-            <a href="#priorities">Priorities</a>
-            <a href="#how-it-works">How it works</a>
-            <a href="#submit">Submit feedback</a>
+  <a href="#priorities">Priorities</a>
+  <a href="#how-it-works">How it works</a>
+  <a href="#submit">Submit feedback</a>
 
-            <select
-              className="lang"
-              aria-label="Select language"
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-            >
-              <option>English</option>
-              <option>Hindi</option>
-              <option>Punjabi</option>
-            </select>
-          </nav>
+  <select
+  className="lang"
+  aria-label="Select language"
+  value={language}
+  onChange={(event) => setLanguage(event.target.value)}
+>
+  <option value="en">English</option>
+  <option value="pa">Punjabi</option>
+</select>
+</nav>
         </header>
 
-        {/* Hero section */}
         <section className="hero">
           <div className="hero-inner">
             <div>
-              <div className="eyebrow">
-                Your voice. Your neighbourhood. Your future.
-              </div>
-
-              <h1>
-                Let's build a better community, together.
-              </h1>
-
+              <div className="eyebrow">Your voice. Your neighbourhood. Your future.</div>
+              <h1>Let's build a better community, together.</h1>
               <p>
                 Share the issues that matter most in your neighbourhood.
-                Your feedback helps shape local priorities and create
-                meaningful change.
+                Your feedback helps shape local priorities and create meaningful change.
               </p>
-
               <div className="hero-actions">
                 <a href="#submit">
-                  <button className="btn btn-primary">
+                  <button className="btn btn-primary" type="button">
                     Share your priority&nbsp; →
                   </button>
                 </a>
-
                 <a href="#priorities">
-                  <button className="btn btn-outline">
+                  <button className="btn btn-outline" type="button">
                     Explore priorities
                   </button>
                 </a>
               </div>
             </div>
 
-            {/* CSS city illustration */}
             <div className="art" aria-hidden="true">
-              <div className="sun"></div>
-              <div className="hill one"></div>
-              <div className="hill two"></div>
-              <div className="building"></div>
-              <div className="building b2"></div>
+              <div className="sun" />
+              <div className="hill one" />
+              <div className="hill two" />
+              <div className="building" />
+              <div className="building b2" />
             </div>
           </div>
         </section>
 
         <main className="content">
-          {/* Statistics */}
           <div className="stats">
-  <div className="stat">
-    <small>Total community submissions</small>
-    <strong>
-      {dashboardStats.totalSubmissions.toLocaleString("en-IN")}
-    </strong>
-    <span>↑ Community voices count</span>
-  </div>
+            <div className="stat">
+              <small>Total community submissions</small>
+              <strong>{Number(dashboardStats.totalSubmissions || 0).toLocaleString("en-IN")}</strong>
+              <span>↑ Community voices count</span>
+            </div>
+            <div className="stat">
+              <small>Priority categories</small>
+              <strong>{categoryOptions.length.toString().padStart(2, "0")}</strong>
+              <span>Across local services</span>
+            </div>
+            <div className="stat">
+              <small>District coverage</small>
+              <strong>{districtOptions.length || "—"}</strong>
+              <span>Participating districts</span>
+            </div>
+            <div className="stat">
+              <small>Open participation</small>
+              <strong>24/7</strong>
+              <span>Share anytime, anywhere</span>
+            </div>
+          </div>
 
-  <div className="stat">
-    <small>Priority categories</small>
-    <strong>{categories.length.toString().padStart(2, "0")}</strong>
-    <span>Across local services</span>
-  </div>
-
-  <div className="stat">
-    <small>District coverage</small>
-    <strong>{districts.length || "—"}</strong>
-    <span>Participating districts</span>
-  </div>
-
-  <div className="stat">
-    <small>Open participation</small>
-    <strong>24/7</strong>
-    <span>Share anytime, anywhere</span>
-  </div>
-</div>
-
-          {/* Community priorities */}
           <section className="section" id="priorities">
             <div className="section-head">
               <div>
                 <h2>What matters to your community?</h2>
-                <p>
-                  Explore the most discussed civic priorities.
-                </p>
+                <p>Explore the most discussed civic priorities.</p>
               </div>
 
               <div className="filters">
                 <select
                   aria-label="Filter by district"
                   value={districtFilter}
-                  onChange={(e) =>
-                    setDistrictFilter(e.target.value)
-                  }
+                  onChange={(event) => setDistrictFilter(event.target.value)}
                 >
                   <option value="">All districts</option>
-
-                  {districts.map((d) => (
-                    <option key={getId(d)} value={getId(d)}>
-                      {getName(d)}
+                  {districtOptions.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {language === "Punjabi" ? item.namePa || item.name : item.name}
                     </option>
                   ))}
                 </select>
@@ -935,71 +701,49 @@ useEffect(() => {
                 <select
                   aria-label="Filter by category"
                   value={categoryFilter}
-                  onChange={(e) =>
-                    setCategoryFilter(e.target.value)
-                  }
+                  onChange={(event) => setCategoryFilter(event.target.value)}
                 >
                   <option value="">All categories</option>
-
-                  {categories.map((c) => (
-                    <option key={getId(c)} value={getId(c)}>
-                      {getName(c)}
+                  {categoryOptions.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {language === "Punjabi" ? item.namePa || item.name : item.name}
                     </option>
                   ))}
                 </select>
               </div>
             </div>
 
-            <div className="categories">
-              {(filteredCategories.length
-                ? filteredCategories
-                : categoryCards
-              ).map((item, index) => {
-                const isApiItem = !Array.isArray(item);
+            {dataLoading ? (
+              <p className="status">Loading categories and districts…</p>
+            ) : categoryCardItems.length ? (
+              <div className="categories">
+                {categoryCardItems.map((item, index) => {
+                  const isFallback = Array.isArray(item);
+                  const icon = isFallback ? item[0] : item.icon || ["🛣️", "💧", "🏥", "📚", "💼", "🛡️"][index % 6];
+                  const name = isFallback ? item[1] : item.name;
+                  const count = isFallback ? item[2] : item.count ?? "Community priority";
 
-                const title = isApiItem
-                  ? getName(item)
-                  : item[1];
-
-                const count = isApiItem
-                  ? item.count ??
-                    item.submission_count ??
-                    "Community priority"
-                  : item[2];
-
-                const icon = isApiItem
-                  ? item.icon ??
-                    ["🛣️", "💧", "🏥", "📚", "💼", "🛡️"][
-                      index % 6
-                    ]
-                  : item[0];
-
-                return (
-                  <div
-                    className="category"
-                    key={isApiItem ? getId(item) : title}
-                  >
-                    <div className="cat-icon">{icon}</div>
-
-                    <div>
-                      <strong>{title}</strong>
-                      <small>{count}</small>
+                  return (
+                    <div className="category" key={isFallback ? name : item.id}>
+                      <div className="cat-icon">{icon}</div>
+                      <div>
+                        <strong>{name}</strong>
+                        <small>{count}</small>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="status">No categories found for the selected filter.</p>
+            )}
           </section>
 
-          {/* How it works */}
           <section className="section" id="how-it-works">
             <div className="section-head">
               <div>
                 <h2>Your feedback makes a difference</h2>
-                <p>
-                  A simple, secure way to help improve the places
-                  we call home.
-                </p>
+                <p>A simple, secure way to help improve the places we call home.</p>
               </div>
             </div>
 
@@ -1008,102 +752,75 @@ useEffect(() => {
                 <div className="cat-icon">📱</div>
                 <div>
                   <strong>1. Verify your number</strong>
-                  <small>
-                    Confirm your mobile number with a secure OTP.
-                  </small>
+                  <small>Confirm your mobile number with a secure OTP.</small>
                 </div>
               </div>
-
               <div className="category">
                 <div className="cat-icon">📝</div>
                 <div>
                   <strong>2. Share your priority</strong>
-                  <small>
-                    Choose a location and tell us what needs attention.
-                  </small>
+                  <small>Choose a location and tell us what needs attention.</small>
                 </div>
               </div>
-
               <div className="category">
                 <div className="cat-icon">🤝</div>
                 <div>
                   <strong>3. Make an impact</strong>
-                  <small>
-                    Your input helps inform community decisions.
-                  </small>
+                  <small>Your input helps inform community decisions.</small>
                 </div>
               </div>
             </div>
           </section>
 
-          {/* Submission form */}
           <section className="form-wrap" id="submit">
             <aside className="form-intro">
               <div className="eyebrow">Be part of the change</div>
-
               <h2>Your voice can shape tomorrow.</h2>
-
               <p>
-                Tell us about the civic issue or improvement that
-                matters to you. Every submission helps build a clearer
-                picture of community needs.
+                Tell us about the civic issue or improvement that matters to you.
+                Every submission helps build a clearer picture of community needs.
               </p>
-
-              <div className="secure">
-                🔒 &nbsp;Secure OTP-based verification
-              </div>
+              <div className="secure">🔒 &nbsp;Secure OTP-based verification</div>
             </aside>
 
             <form className="form-body" onSubmit={handleSubmit}>
               <h3>Submit your civic priority</h3>
+              <p className="subtext">Fields marked with * are required.</p>
 
-              <p className="subtext">
-                Fields marked with * are required.
-              </p>
-
-              {/* Mobile number */}
               <div className="form-group">
                 <label htmlFor="mobile">Mobile number *</label>
-
                 <div className="otp-row">
                   <input
                     id="mobile"
                     className="field"
+                    type="tel"
                     inputMode="numeric"
                     maxLength={10}
                     placeholder="Enter 10-digit mobile number"
                     value={mobile}
                     disabled={verified}
-                    onChange={(e) => {
-                      setMobile(
-                        e.target.value.replace(/\D/g, "").slice(0, 10)
-                      );
+                    required
+                    onChange={(event) => {
+                      setMobile(event.target.value.replace(/\D/g, "").slice(0, 10));
                       setOtpSent(false);
                       setVerified(false);
                       setOtp("");
                     }}
                   />
-
                   <button
                     type="button"
                     className="btn btn-primary"
                     disabled={otpLoading || verified}
                     onClick={handleSendOtp}
                   >
-                    {otpLoading
-                      ? "Please wait…"
-                      : otpSent
-                      ? "Resend OTP"
-                      : "Send OTP"}
+                    {otpLoading ? "Please wait…" : otpSent ? "Resend OTP" : "Send OTP"}
                   </button>
                 </div>
               </div>
 
-              {/* OTP verification */}
               {otpSent && !verified && (
                 <div className="form-group">
                   <label htmlFor="otp">Enter OTP *</label>
-
                   <div className="otp-row">
                     <input
                       id="otp"
@@ -1112,13 +829,8 @@ useEffect(() => {
                       maxLength={6}
                       placeholder="6-digit OTP"
                       value={otp}
-                      onChange={(e) =>
-                        setOtp(
-                          e.target.value.replace(/\D/g, "").slice(0, 6)
-                        )
-                      }
+                      onChange={(event) => setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))}
                     />
-
                     <button
                       type="button"
                       className="btn btn-primary"
@@ -1132,174 +844,134 @@ useEffect(() => {
               )}
 
               {verified && (
-                <p className="status">
-                  ✓ Mobile number verified. You can now complete the form.
-                </p>
+                <p className="status">✓ Mobile number verified. You can now complete the form.</p>
               )}
 
               {message && (
-                <p
-                  className={`status ${
-                    messageType === "error" ? "error" : ""
-                  }`}
-                >
+                <p className={`status ${messageType === "error" ? "error" : ""}`} role="status">
                   {message}
                 </p>
               )}
 
-              {/* Fields remain locked until OTP verification */}
               <div className={verified ? "" : "locked"}>
                 <div className="grid2">
-                  {/* District */}
                   <div className="form-group">
                     <label htmlFor="district">District *</label>
-
                     <select
                       id="district"
                       value={district}
-                      onChange={(e) => {
-                        setDistrict(e.target.value);
+                      required
+                      disabled={!verified || dataLoading}
+                      onChange={(event) => {
+                        setDistrict(event.target.value);
                         setConstituency("");
                       }}
-                      disabled={!verified}
                     >
                       <option value="">Select district</option>
-
-                      {districts.map((d) => (
-                        <option
-                          key={getId(d)}
-                          value={getId(d)}
-                        >
-                          {getName(d)}
+                      {districtOptions.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {language === "Punjabi" ? item.namePa || item.name : item.name}
                         </option>
                       ))}
                     </select>
                   </div>
 
-                  {/* Assembly constituency */}
                   <div className="form-group">
-                    <label htmlFor="constituency">
-                      Assembly constituency *
-                    </label>
-
+                    <label htmlFor="constituency">Assembly constituency *</label>
                     <select
                       id="constituency"
                       value={constituency}
-                      onChange={(e) =>
-                        setConstituency(e.target.value)
-                      }
+                      required
                       disabled={!verified || !district}
+                      onChange={(event) => setConstituency(event.target.value)}
                     >
                       <option value="">Select constituency</option>
-
-                      {constituencies.map((c) => (
-                        <option
-                          key={getId(c) || c}
-                          value={getId(c) || c}
-                        >
-                          {getName(c) || c}
+                      {constituencies.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {language === "Punjabi" ? item.namePa || item.name : item.name}
                         </option>
                       ))}
                     </select>
+                    {verified && district && constituencies.length === 0 && (
+                      <small className="status error">
+                        No constituencies returned for this district. Check the district API response.
+                      </small>
+                    )}
                   </div>
 
-                  {/* Category */}
                   <div className="form-group">
                     <label htmlFor="category">Category *</label>
-
                     <select
                       id="category"
                       value={category}
-                      onChange={(e) => {
-                        setCategory(e.target.value);
+                      required
+                      disabled={!verified || dataLoading}
+                      onChange={(event) => {
+                        setCategory(event.target.value);
                         setSubcategory("");
                       }}
-                      disabled={!verified}
                     >
                       <option value="">Select category</option>
-
-                      {categories.map((c) => (
-                        <option
-                          key={getId(c)}
-                          value={getId(c)}
-                        >
-                          {getName(c)}
+                      {categoryOptions.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {language === "Punjabi" ? item.namePa || item.name : item.name}
                         </option>
                       ))}
                     </select>
                   </div>
 
-                  {/* Subcategory */}
                   <div className="form-group">
-                    <label htmlFor="subcategory">
-                      Subcategory *
-                    </label>
-
+                    <label htmlFor="subcategory">Subcategory *</label>
                     <select
                       id="subcategory"
                       value={subcategory}
-                      onChange={(e) =>
-                        setSubcategory(e.target.value)
-                      }
+                      required
                       disabled={!verified || !category}
+                      onChange={(event) => setSubcategory(event.target.value)}
                     >
                       <option value="">Select subcategory</option>
-
-                      {subcategories.map((s) => (
-                        <option
-                          key={getId(s) || s}
-                          value={getId(s) || s}
-                        >
-                          {getName(s) || s}
+                      {subcategories.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {language === "Punjabi" ? item.namePa || item.name : item.name}
                         </option>
                       ))}
                     </select>
+                    {verified && category && subcategories.length === 0 && (
+                      <small className="status error">
+                        No subcategories returned for this category. Check the category API response.
+                      </small>
+                    )}
                   </div>
                 </div>
 
-                {/* Description */}
                 <div className="form-group">
-                  <label htmlFor="description">
-                    Describe your concern or suggestion *
-                  </label>
-
+                  <label htmlFor="description">Describe your concern or suggestion *</label>
                   <textarea
                     id="description"
                     rows={4}
                     placeholder="Please describe the issue, its location, and how it affects your community…"
                     value={description}
-                    onChange={(e) =>
-                      setDescription(e.target.value)
-                    }
+                    required
+                    onChange={(event) => setDescription(event.target.value)}
                     disabled={!verified}
                   />
                 </div>
 
-                <button
-                  className="btn submit"
-                  type="submit"
-                  disabled={!verified || loading}
-                >
-                  {loading
-                    ? "Submitting…"
-                    : "Submit your priority →"}
+                <button className="btn submit" type="submit" disabled={!verified || loading}>
+                  {loading ? "Submitting…" : "Submit your priority →"}
                 </button>
               </div>
             </form>
           </section>
         </main>
 
-        {/* Footer */}
         <footer className="footer">
           <div>
             <strong>Civic Priorities</strong>
             <br />
             Building stronger communities through participation.
           </div>
-
-          <div>
-            © {new Date().getFullYear()} Civic Priorities. All rights reserved.
-          </div>
+          <div>© {new Date().getFullYear()} Civic Priorities. All rights reserved.</div>
         </footer>
       </div>
     </>
