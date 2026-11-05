@@ -1,8 +1,9 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import hero from "./assets/herobg.png";
 import "./HowItWorks.css";
+import logo from "./assets/cn.png";
 
 const steps = [
   {
@@ -42,36 +43,65 @@ const steps = [
 ];
 
 export default function Howwork() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const closeMenu = () => {
+    setMenuOpen(false);
+  };
+
   return (
     <div className="how-page">
 
       {/* Navbar */}
-      {/* Navbar - Same as Home Page */}
-<header className="topbar">
-  <div className="brand">
-    <div className="brandmark">✳</div>
-    <span>Civic Priorities</span>
-  </div>
+      <header className="topbar">
+        <div className="brand">
+          <img src={logo} alt="CityNeeds Logo" className="logo" />
+        </div>
 
-  <nav className="nav">
-    <Link to="/#priorities">Priorities</Link>
+        {/* Hamburger Button */}
+        <button
+          type="button"
+          className="menu-toggle"
+          onClick={() => setMenuOpen((previous) => !previous)}
+          aria-label="Toggle navigation menu"
+          aria-expanded={menuOpen}
+          aria-controls="how-navigation"
+        >
+          {menuOpen ? "✕" : "☰"}
+        </button>
 
-    <Link to="/how-it-works" className="active">
-      How it works
-    </Link>
+        {/* Navigation Links */}
+        <nav
+          id="how-navigation"
+          className={`nav ${menuOpen ? "nav-open" : ""}`}
+        >
+          <Link to="/#priorities" onClick={closeMenu}>
+            Priorities
+          </Link>
 
-    <Link to="/#submit">Submit feedback</Link>
+          <Link
+            to="/how-it-works"
+            className="active"
+            onClick={closeMenu}
+          >
+            How it works
+          </Link>
 
-    <select
-      className="lang"
-      aria-label="Select language"
-      defaultValue="en"
-    >
-      <option value="en">English</option>
-      <option value="pa">Punjabi</option>
-    </select>
-  </nav>
-</header>
+          <Link to="/#submit" onClick={closeMenu}>
+            Submit feedback
+          </Link>
+
+          <select
+            className="lang"
+            aria-label="Select language"
+            defaultValue="en"
+            onChange={closeMenu}
+          >
+            <option value="en">English</option>
+            <option value="pa">Punjabi</option>
+          </select>
+        </nav>
+      </header>
 
       {/* Hero Section */}
       <section
@@ -127,6 +157,7 @@ export default function Howwork() {
                   <span className="how-step-number">
                     {step.number}
                   </span>
+
                   <span className="how-step-icon">
                     {step.icon}
                   </span>
@@ -144,6 +175,7 @@ export default function Howwork() {
 
             <div>
               <h3>Speak in Your Language</h3>
+
               <p>
                 You may share your inputs in Punjabi or English.
               </p>
@@ -185,10 +217,13 @@ export default function Howwork() {
 
             <div className="how-next-visual">
               <div className="how-next-icon">📊</div>
+
               <h3>Your Voice</h3>
               <div className="how-next-arrow">↓</div>
+
               <h3>Community Insights</h3>
               <div className="how-next-arrow">↓</div>
+
               <h3>Monthly Newsletter</h3>
             </div>
           </div>
@@ -205,6 +240,7 @@ export default function Howwork() {
 
             <div>
               <h3>Disclaimer</h3>
+
               <p>
                 CityNeeds Community Reporter is a platform for
                 collecting and sharing citizens’ concerns and

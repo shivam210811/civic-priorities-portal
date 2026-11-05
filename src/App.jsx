@@ -3,6 +3,7 @@ import Swal from "sweetalert2";
 import hero from './assets/herobg.png'
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import Howwork from "./Howwork.jsx";
+import logo from './assets/cn.png';
 import "sweetalert2/dist/sweetalert2.min.css";
 import {
   getCategories,
@@ -90,6 +91,301 @@ button, input, select, textarea { font: inherit; }
   font-weight: 700;
 }
 
+/* =========================
+   RESPONSIVE NAVBAR
+========================= */
+
+/* =========================
+   RESPONSIVE NAVBAR
+========================= */
+
+.topbar {
+  min-height: 78px;
+  width: 100%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px max(5.5vw, 24px);
+  border-bottom: 1px solid #e8eeee;
+  position: relative;
+  z-index: 20;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  font: 800 21px Manrope, sans-serif;
+  color: #153b4b;
+  flex-shrink: 0;
+}
+
+.brand img {
+  width: 120px;
+  height: 50px;
+  object-fit: contain;
+}
+
+.brandmark {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: #0c8d83;
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 21px;
+}
+
+/* Desktop Navigation */
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 38px;
+  color: #344b5d;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.nav a {
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.nav a:hover,
+.nav a.active {
+  color: #07978c;
+}
+
+/* Language Dropdown */
+
+.lang {
+  border: 1px solid #dce7e6;
+  border-radius: 9px;
+  padding: 9px 12px;
+  background: #ffffff;
+  color: #29434e;
+  min-width: 145px;
+  font-size: 16px;
+  cursor: pointer;
+  outline: none;
+}
+
+/* Hamburger Button */
+
+.menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: #07978c;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 25px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.menu-toggle:hover {
+  background: #067b73;
+}
+
+.hamburger-icon,
+.close-icon {
+  display: block;
+  line-height: 1;
+}
+
+/* Tablet and Mobile */
+
+@media (max-width: 900px) {
+  .topbar {
+    min-height: 70px;
+    padding: 12px 24px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .menu-toggle {
+    display: flex;
+  }
+
+  .nav {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 0;
+    padding: 12px 0 5px;
+    margin-top: 12px;
+    border-top: 1px solid #e8eeee;
+    font-size: 16px;
+  }
+
+  .nav.nav-open {
+    display: flex;
+  }
+
+  .nav a {
+    display: block;
+    width: 100%;
+    padding: 12px 8px;
+  }
+
+  .nav a:hover {
+    background: #f0f8f6;
+    border-radius: 7px;
+  }
+
+  .lang {
+    margin-top: 10px;
+    min-width: 145px;
+    font-size: 14px;
+  }
+}
+
+/* Small Mobile */
+
+@media (max-width: 480px) {
+  .topbar {
+    padding: 10px 16px;
+  }
+
+  .brand img {
+    width: 105px;
+    height: 44px;
+  }
+
+  .menu-toggle {
+    width: 40px;
+    height: 40px;
+    font-size: 23px;
+  }
+
+  .nav {
+    font-size: 14px;
+  }
+
+  .lang {
+    min-width: 130px;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+}
+
+/* Hamburger button */
+
+.menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: #07978c;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 25px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.menu-toggle:hover {
+  background: #067b73;
+}
+
+.hamburger-icon,
+.close-icon {
+  display: block;
+  line-height: 1;
+}
+
+/* Tablet and mobile navigation */
+
+@media (max-width: 900px) {
+  .topbar {
+    min-height: 70px;
+    padding: 12px 24px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .menu-toggle {
+    display: flex;
+  }
+
+  .nav {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 0;
+    padding: 12px 0 5px;
+    margin-top: 12px;
+    border-top: 1px solid #e8eeee;
+    font-size: 16px;
+  }
+
+  .nav.nav-open {
+    display: flex;
+  }
+
+  .nav a {
+    display: block;
+    width: 100%;
+    padding: 12px 5px;
+  }
+
+  .nav a:hover {
+    background: #f0f8f6;
+    border-radius: 7px;
+  }
+
+  .lang {
+    margin-top: 10px;
+    min-width: 145px;
+    font-size: 14px;
+  }
+}
+
+/* Small mobile screens */
+
+@media (max-width: 480px) {
+  .topbar {
+    padding: 10px 16px;
+  }
+
+  .brand img {
+    width: 105px;
+    height: 44px;
+  }
+
+  .menu-toggle {
+    width: 40px;
+    height: 40px;
+    font-size: 23px;
+  }
+
+  .nav {
+    font-size: 14px;
+  }
+
+  .lang {
+    min-width: 130px;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+}
+
 .nav a {
   color: inherit;
   text-decoration: none;
@@ -99,6 +395,60 @@ button, input, select, textarea { font: inherit; }
 .nav a:hover,
 .nav a.active {
   color: #07978c;
+}
+
+/* Hamburger button - hidden on desktop */
+.menu-toggle {
+  display: none;
+  background: #07978c;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  width: 42px;
+  height: 42px;
+  font-size: 24px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile and small screens */
+@media (max-width: 768px) {
+  .topbar {
+    min-height: 68px;
+    padding: 12px 20px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    position: relative;
+  }
+
+  .menu-toggle {
+    display: flex;
+  }
+
+  .nav {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+    padding: 18px 0 10px;
+    font-size: 15px;
+  }
+
+  .nav.nav-open {
+    display: flex;
+  }
+
+  .nav a {
+    display: block;
+  }
+
+  .lang {
+    min-width: 130px;
+    font-size: 14px;
+  }
 }
 
 /* Responsive Navbar */
@@ -206,9 +556,6 @@ button, input, select, textarea { font: inherit; }
 .footer { background: #103d49; color: #d6e7e5; padding: 27px max(5.5vw,24px); display: flex; justify-content: space-between; gap: 15px; font-size: 12px; }
 .footer strong { color: #fff; }
 @media(max-width:760px) {
-  .topbar { min-height: 68px; }
-  .nav { gap: 12px; }
-  .nav a { display: none; }
   .hero { padding-top: 48px; }
   .hero-inner { grid-template-columns: 1fr; }
   .art { height: 170px; max-width: 400px; width: 100%; margin: auto; }
@@ -407,7 +754,7 @@ const getNestedArray = (item, keys) => {
 
 function Home() {
   const [categories, setCategories] = useState([]);
-  
+  const [menuOpen, setMenuOpen] = useState(false);
   const [districts, setDistricts] = useState([]);
   const [dashboardStats, setDashboardStats] = useState({
     totalSubmissions: 0,
@@ -751,27 +1098,57 @@ const showMessage = (text, type = "success") => {
 
       <div className="page">
         <header className="topbar">
-          <div className="brand">
-            <div className="brandmark">✳</div>
-            <span>Civic Priorities</span>
-          </div>
+  <div className="brand">
+    <img
+      src={logo}
+      alt="Community Reporter"
+      width="120"
+      height="50"
+    />
+  </div>
 
-          <nav className="nav">
-  <a href="#priorities">Priorities</a>
-  <Link to="/how-it-works">How it works</Link>
-  <a href="#submit">Submit feedback</a>
+  <button
+    type="button"
+    className="menu-toggle"
+    onClick={() => setMenuOpen((previous) => !previous)}
+    aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+    aria-expanded={menuOpen}
+    aria-controls="main-navigation"
+  >
+    {menuOpen ? (
+      <span className="close-icon">✕</span>
+    ) : (
+      <span className="hamburger-icon">☰</span>
+    )}
+  </button>
 
-  <select
-  className="lang"
-  aria-label="Select language"
-  value={language}
-  onChange={(event) => setLanguage(event.target.value)}
->
-  <option value="en">English</option>
-  <option value="pa">Punjabi</option>
-</select>
-</nav>
-        </header>
+  <nav
+    id="main-navigation"
+    className={`nav ${menuOpen ? "nav-open" : ""}`}
+  >
+    <a href="#priorities" onClick={() => setMenuOpen(false)}>
+      Priorities
+    </a>
+
+    <Link to="/how-it-works" onClick={() => setMenuOpen(false)}>
+      How it works
+    </Link>
+
+    <a href="#submit" onClick={() => setMenuOpen(false)}>
+      Submit feedback
+    </a>
+
+    <select
+      className="lang"
+      aria-label="Select language"
+      value={language}
+      onChange={(event) => setLanguage(event.target.value)}
+    >
+      <option value="en">English</option>
+      <option value="pa">Punjabi</option>
+    </select>
+  </nav>
+</header>
 
         <section className="hero">
           <div className="hero-inner">
@@ -828,7 +1205,7 @@ const showMessage = (text, type = "success") => {
             <div className="section-head">
               <div>
                 <h2>What matters to your community?</h2>
-                <p>Explore the most discussed civic priorities.</p>
+                <p>Explore the most discussed  Community Reporter.</p>
               </div>
 
               <div className="filters">
@@ -1083,11 +1460,11 @@ const showMessage = (text, type = "success") => {
 
         <footer className="footer">
           <div>
-            <strong>Civic Priorities</strong>
+            <strong> Community Reporter</strong>
             <br />
             Building stronger communities through participation.
           </div>
-          <div>© {new Date().getFullYear()} Civic Priorities. All rights reserved.</div>
+          <div>© {new Date().getFullYear()}  Community Reporter. All rights reserved.</div>
         </footer>
       </div>
     </>

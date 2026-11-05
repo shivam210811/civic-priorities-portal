@@ -13,78 +13,190 @@
   background: #ffffff;
 }
 
-/* NAVBAR */
-.how-navbar {
+/* =========================
+   RESPONSIVE NAVBAR
+========================= */
+
+.topbar {
   width: 100%;
-  min-height: 118px;
-  padding: 18px 5.6%;
+  min-height: 78px;
   background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 30px;
+  padding: 12px max(5.5vw, 24px);
+  border-bottom: 1px solid #e8eeee;
   position: relative;
-  z-index: 10;
-  border-bottom: 1px solid #edf0f0;
+  z-index: 20;
 }
 
-.how-brand {
+.brand {
   display: flex;
   align-items: center;
-  gap: 16px;
-  text-decoration: none;
-  color: #173b4c;
-  font-family: 'Manrope', sans-serif;
-  font-size: 30px;
-  font-weight: 800;
-  white-space: nowrap;
+  gap: 11px;
+  flex-shrink: 0;
 }
 
-.how-brand-icon {
-  width: 57px;
-  height: 57px;
-  border-radius: 20px;
-  background: #07978c;
-  color: #ffffff;
+.brand .logo {
+  width: 120px;
+  height: 50px;
+  object-fit: contain;
+}
+
+.brandmark {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: #0c8d83;
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 21px;
+}
+
+.nav {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 34px;
-  font-weight: 400;
-}
-
-.how-nav-links {
-  display: flex;
-  align-items: center;
   gap: 38px;
-}
-
-.how-nav-links a {
   color: #344b5d;
-  text-decoration: none;
   font-size: 18px;
   font-weight: 700;
+}
+
+.nav a {
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
   transition: color 0.2s ease;
 }
 
-.how-nav-links a:hover,
-.how-nav-links a.active {
+.nav a:hover,
+.nav a.active {
   color: #07978c;
 }
 
-.how-language-select {
-  width: 275px;
-  padding: 15px 20px;
-  border: 1px solid #d9e1e3;
-  border-radius: 14px;
+.lang {
+  border: 1px solid #dce7e6;
+  border-radius: 9px;
+  padding: 9px 12px;
   background: #ffffff;
-  color: #173b4c;
-  font-size: 17px;
-  font-weight: 600;
+  color: #29434e;
+  min-width: 145px;
+  font-size: 16px;
   cursor: pointer;
+  outline: none;
 }
 
-/* HERO */
+/* Hamburger button - hidden on desktop */
+
+.menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: #07978c;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 25px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.menu-toggle:hover {
+  background: #067b73;
+}
+
+/* TABLET */
+
+@media (max-width: 900px) {
+  .topbar {
+    min-height: 70px;
+    padding: 12px 24px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .menu-toggle {
+    display: flex;
+  }
+
+  .nav {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 0;
+    padding: 12px 0 5px;
+    margin-top: 12px;
+    border-top: 1px solid #e8eeee;
+    font-size: 16px;
+  }
+
+  .nav.nav-open {
+    display: flex;
+  }
+
+  .nav a {
+    display: block;
+    width: 100%;
+    padding: 12px 8px;
+  }
+
+  .nav a:hover {
+    background: #f0f8f6;
+    border-radius: 7px;
+  }
+
+  .lang {
+    margin-top: 10px;
+    min-width: 145px;
+    font-size: 14px;
+  }
+}
+
+/* MOBILE */
+
+@media (max-width: 600px) {
+  .topbar {
+    padding: 10px 16px;
+  }
+
+  .brand .logo {
+    width: 105px;
+    height: 44px;
+  }
+
+  .menu-toggle {
+    width: 40px;
+    height: 40px;
+    font-size: 23px;
+  }
+
+  .nav {
+    font-size: 14px;
+  }
+
+  .nav a {
+    font-size: 14px;
+  }
+
+  .lang {
+    width: 100%;
+    max-width: 200px;
+    min-width: 130px;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+}
+
+/* =========================
+   HERO
+========================= */
+
 .how-hero {
   min-height: 580px;
   width: 100%;
@@ -158,7 +270,10 @@
   font-weight: 800;
 }
 
-/* PARTICIPATION STEPS */
+/* =========================
+   PARTICIPATION STEPS
+========================= */
+
 .how-steps-section {
   padding: 95px 0;
   background: #f7faf9;
@@ -243,7 +358,10 @@
   margin: 0;
 }
 
-/* LANGUAGE CARD */
+/* =========================
+   LANGUAGE CARD
+========================= */
+
 .how-language-card {
   margin-top: 35px;
   padding: 32px;
@@ -297,7 +415,10 @@
   font-weight: 700;
 }
 
-/* WHAT HAPPENS NEXT */
+/* =========================
+   WHAT HAPPENS NEXT
+========================= */
+
 .how-next-section {
   padding: 90px 0;
   background: #ffffff;
@@ -351,7 +472,10 @@
   font-weight: 800;
 }
 
-/* DISCLAIMER */
+/* =========================
+   DISCLAIMER
+========================= */
+
 .how-disclaimer-section {
   padding: 0 0 80px;
   background: #ffffff;
@@ -385,7 +509,10 @@
   margin: 0;
 }
 
-/* FOOTER */
+/* =========================
+   FOOTER
+========================= */
+
 .how-footer {
   background: #123b43;
   color: #ffffff;
@@ -400,23 +527,11 @@
   font-size: 14px;
 }
 
-/* RESPONSIVE */
+/* =========================
+   RESPONSIVE PAGE CONTENT
+========================= */
+
 @media (max-width: 900px) {
-  .how-navbar {
-    padding: 18px 5%;
-    flex-wrap: wrap;
-  }
-
-  .how-nav-links {
-    width: 100%;
-    justify-content: space-between;
-    gap: 15px;
-  }
-
-  .how-language-select {
-    width: 150px;
-  }
-
   .how-steps-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -428,35 +543,6 @@
 }
 
 @media (max-width: 600px) {
-  .how-navbar {
-    min-height: auto;
-  }
-
-  .how-brand {
-    font-size: 23px;
-  }
-
-  .how-brand-icon {
-    width: 45px;
-    height: 45px;
-    font-size: 27px;
-    border-radius: 14px;
-  }
-
-  .how-nav-links {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    gap: 17px;
-  }
-
-  .how-nav-links a {
-    font-size: 14px;
-  }
-
-  .how-language-select {
-    width: 100%;
-  }
-
   .how-container {
     width: 90%;
   }
@@ -520,107 +606,5 @@
   .how-footer .how-container {
     flex-direction: column;
     text-align: center;
-  }
-}
-
-
-
-
-
-/* Shared Navbar Styling */
-.topbar {
-  min-height: 78px;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px max(5.5vw, 24px);
-  border-bottom: 1px solid #e8eeee;
-  position: relative;
-  z-index: 10;
-  width: 100%;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  font: 800 21px Manrope, sans-serif;
-  color: #153b4b;
-  white-space: nowrap;
-}
-
-.brandmark {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: #0c8d83;
-  color: white;
-  display: grid;
-  place-items: center;
-  font-size: 21px;
-  flex-shrink: 0;
-}
-
-.nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 38px;
-  color: #344b5d;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.nav a {
-  color: inherit;
-  text-decoration: none;
-  transition: color 0.2s ease;
-  white-space: nowrap;
-}
-
-.nav a:hover,
-.nav a.active {
-  color: #07978c;
-}
-
-.lang {
-  border: 1px solid #dce7e6;
-  border-radius: 9px;
-  padding: 9px 12px;
-  background: #fff;
-  color: #29434e;
-  min-width: 145px;
-  font-size: 16px;
-}
-
-/* Tablet */
-@media (max-width: 900px) {
-  .nav {
-    gap: 18px;
-    font-size: 15px;
-  }
-}
-
-/* Mobile */
-@media (max-width: 600px) {
-  .topbar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-    padding: 15px 20px;
-  }
-
-  .nav {
-    width: 100%;
-    justify-content: flex-start;
-    gap: 17px;
-    flex-wrap: wrap;
-    font-size: 14px;
-  }
-
-  .lang {
-    min-width: 110px;
-    font-size: 13px;
   }
 }
