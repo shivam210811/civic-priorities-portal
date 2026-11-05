@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
+import hero from './assets/herobg.png'
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import Howwork from "./Howwork.jsx";
 import "sweetalert2/dist/sweetalert2.min.css";
 import {
   getCategories,
@@ -54,6 +57,7 @@ OR flat rows:
 ]
 */
 
+
 const styles = `
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
 
@@ -76,13 +80,58 @@ button, input, select, textarea { font: inherit; }
 .brandmark {
   width: 38px; height: 38px; border-radius: 12px; background: #0c8d83;
   color: white; display: grid; place-items: center; font-size: 21px;
+}.nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 38px;
+  color: #344b5d;
+  font-size: 18px;
+  font-weight: 700;
 }
-.nav { display: flex; align-items: center; gap: 25px; color: #536773; font-size: 13px; font-weight: 600; }
-.nav a { color: inherit; text-decoration: none; }
+
+.nav a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.nav a:hover,
+.nav a.active {
+  color: #07978c;
+}
+
+/* Responsive Navbar */
+@media (max-width: 900px) {
+  .nav {
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 600px) {
+  .nav {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 17px;
+    flex-wrap: wrap;
+    font-size: 14px;
+  }
+}
 .lang { border: 1px solid #dce7e6; border-radius: 9px; padding: 9px 12px; background: #fff; color: #29434e; }
 .hero {
-  background: linear-gradient(115deg,#083c4a 0%,#0a5960 60%,#0c7772 100%);
-  color: #fff; padding: 66px max(7vw,24px) 78px; min-height: 380px;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(8, 48, 59, 0.88) 0%,
+      rgba(8, 65, 70, 0.72) 15%,
+      rgba(8, 65, 70, 0.35) 40%
+    ),
+    url(${hero}) center center / cover no-repeat;
+
+  color: #fff;
+  padding: 66px max(7vw, 24px) 78px;
+  min-height: 380px;
 }
 .hero-inner {
   max-width: 1150px; margin: auto; display: grid; grid-template-columns: 1.1fr .9fr;
@@ -356,7 +405,7 @@ const getNestedArray = (item, keys) => {
   return [];
 };
 
-export default function App() {
+function Home() {
   const [categories, setCategories] = useState([]);
   
   const [districts, setDistricts] = useState([]);
@@ -709,7 +758,7 @@ const showMessage = (text, type = "success") => {
 
           <nav className="nav">
   <a href="#priorities">Priorities</a>
-  <a href="#how-it-works">How it works</a>
+  <Link to="/how-it-works">How it works</Link>
   <a href="#submit">Submit feedback</a>
 
   <select
@@ -747,13 +796,7 @@ const showMessage = (text, type = "success") => {
               </div>
             </div>
 
-            <div className="art" aria-hidden="true">
-              <div className="sun" />
-              <div className="hill one" />
-              <div className="hill two" />
-              <div className="building" />
-              <div className="building b2" />
-            </div>
+            
           </div>
         </section>
 
@@ -843,90 +886,7 @@ const showMessage = (text, type = "success") => {
             )}
           </section>
 
-          <section className="how-section" id="how-it-works">
-            <div className="how-heading">
-              <div className="eyebrow">A simple way to make your voice heard</div>
-              <h2>How It Works</h2>
-              <p>Five simple steps to share what matters in your neighbourhood and help build a clearer picture of local priorities.</p>
-            </div>
-
-            <div className="how-intro">
-              <strong>Citizens know best what their City Needs.</strong> CityNeeds Community Reporter gives residents a simple way to share the concerns and ideas that matter in their neighbourhood. Your input helps create a clearer picture of local priorities.
-            </div>
-
-            <div className="steps-grid">
-              <article className="step-card">
-                <div className="step-top">
-                  <div className="step-icon">📍</div>
-                  <span className="step-number">STEP 01</span>
-                </div>
-                <h3>Choose your area</h3>
-                <p>Select your district and Assembly constituency so your input can be understood in the right local context.</p>
-              </article>
-
-              <article className="step-card">
-                <div className="step-top">
-                  <div className="step-icon">🔐</div>
-                  <span className="step-number">STEP 02</span>
-                </div>
-                <h3>Verify your identity</h3>
-                <p>Complete the identity verification step. Your verification details will be kept separate from public summaries.</p>
-              </article>
-
-              <article className="step-card">
-                <div className="step-top">
-                  <div className="step-icon">🗺️</div>
-                  <span className="step-number">STEP 03</span>
-                </div>
-                <h3>Tell us where the issue is</h3>
-                <p>Enter your locality or a nearby landmark. You do not need to provide your full address.</p>
-              </article>
-
-              <article className="step-card">
-                <div className="step-top">
-                  <div className="step-icon">💬</div>
-                  <span className="step-number">STEP 04</span>
-                </div>
-                <h3>Share your inputs</h3>
-                <p>Select a category and describe a concern or suggestion. You can submit up to five inputs per month and include a possible solution if you wish.</p>
-              </article>
-
-              <article className="step-card">
-                <div className="step-top">
-                  <div className="step-icon">✅</div>
-                  <span className="step-number">STEP 05</span>
-                </div>
-                <h3>Review and submit</h3>
-                <p>Check your entries before submitting. You will receive a reference number for your submission.</p>
-              </article>
-            </div>
-
-            <div className="how-note">
-              <span className="note-icon">🌐</span>
-              <div><strong>Share in the language you are comfortable with.</strong> You may share your inputs in Punjabi, English of these languages.</div>
-            </div>
-
-            <div className="next-section">
-              <article className="next-card">
-                <h3>🔎 What happens next?</h3>
-                <p>We review and group submissions by constituency. A monthly newsletter summarising the inputs received will be made available in the public domain and sent to the relevant offices. Public summaries will not include your personal verification details.</p>
-              </article>
-
-              <article className="next-card">
-                <h3>🗣️ Your voice matters</h3>
-                <p>Every input helps create a better understanding of the concerns, needs, and ideas shared by residents across their communities.</p>
-                <div className="language-chips">
-                  <span className="language-chip">Punjabi</span>                  
-                  <span className="language-chip">English</span>
-                </div>
-              </article>
-            </div>
-
-            <div className="disclaimer">
-              <h3>⚠️ Disclaimer</h3>
-              <p>CityNeeds Community Reporter is a platform for collecting and sharing citizens’ concerns and suggestions. CityNeeds is not an NGO or a complaints-resolution service. We cannot guarantee that a complaint will be resolved or that a suggestion will be implemented.</p>
-            </div>
-          </section>
+  
 
           <section className="form-wrap" id="submit">
             <aside className="form-intro">
@@ -1131,5 +1091,15 @@ const showMessage = (text, type = "success") => {
         </footer>
       </div>
     </>
+  );
+}
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/how-it-works" element={<Howwork />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
