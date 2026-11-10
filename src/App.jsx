@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Swal from "sweetalert2";
 import hero from './assets/herobg.png'
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import Howwork from "./Howwork.jsx";
 import logo from './assets/cn.png';
 import "sweetalert2/dist/sweetalert2.min.css";
+
 import {
   getCategories,
   getDistricts,
@@ -753,6 +754,87 @@ const getNestedArray = (item, keys) => {
 };
 
 function Home() {
+
+const videoRef = useRef(null);
+const cameraStreamRef = useRef(null);
+
+const [cameraOpen, setCameraOpen] = useState(false);
+const [photoData, setPhotoData] = useState("");
+const [cameraLoading, setCameraLoading] = useState(false);
+
+const stopCamera = () => {
+  if (cameraStreamRef.current) {
+    cameraStreamRef.current.getTracks().forEach(track => track.stop());
+    cameraStreamRef.current = null;
+  }
+
+  setCameraOpen(false);
+};
+
+const openCamera = async () => {
+  try {
+    setCameraLoading(true);
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error("Camera access requires HTTPS and a supported browser.");
+    }
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: "environment" }
+      },
+      audio: false
+    });
+
+    cameraStreamRef.current = stream;
+    setCameraOpen(true);
+
+    setTimeout(() => {
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(console.error);
+      }
+    }, 100);
+
+  } catch (error) {
+    showMessage(
+      error.message || "Unable to access camera. Please allow camera permission.",
+      "error"
+    );
+  } finally {
+    setCameraLoading(false);
+  }
+};
+
+const capturePhoto = () => {
+  const video = videoRef.current;
+
+  if (!video || !video.videoWidth) {
+    showMessage("Camera is not ready. Please try again.", "error");
+    return;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  const context = canvas.getContext("2d");
+  context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  const image = canvas.toDataURL("image/jpeg", 0.75);
+
+  setPhotoData(image);
+  stopCamera();
+};
+
+useEffect(() => {
+  return () => {
+    if (cameraStreamRef.current) {
+      cameraStreamRef.current.getTracks().forEach(track => track.stop());
+    }
+  };
+}, []);
+
   const [categories, setCategories] = useState([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [districts, setDistricts] = useState([]);
@@ -1034,15 +1116,16 @@ const showMessage = (text, type = "success") => {
 
     setLoading(true);
     try {
-      const payload = {
-        mobile,
-        district,
-        constituency,
-        category,
-        subcategory,
-        description: description.trim(),
-        language,
-      };
+   const payload = {
+  mobile,
+  district,
+  constituency,
+  category,
+  subcategory,
+  description: description.trim(),
+  language,
+  photoData: photoData,
+};
 
       const response = await submitSubmission(payload);
 
@@ -1067,6 +1150,8 @@ const showMessage = (text, type = "success") => {
       setOtp("");
       setOtpSent(false);
       setVerified(false);
+      setPhotoData("");
+stopCamera();
     } catch (error) {
       showMessage(
         error?.message || "Unable to submit your response. Please try again.",
@@ -1449,6 +1534,94 @@ const showMessage = (text, type = "success") => {
                     disabled={!verified}
                   />
                 </div>
+
+<div className="form-group">
+  <label>Capture issue photo (Optional)</label>
+
+  {!photoData && !cameraOpen && (
+    <button
+      type="button"
+      className="btn btn-primary"
+      onClick={openCamera}
+      disabled={!verified || cameraLoading}
+    >
+      {cameraLoading ? "Opening Camera..." : "📷 Open Camera"}
+    </button>
+  )}
+
+  {cameraOpen && (
+    <div>
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        style={{
+          width: "100%",
+          maxWidth: "420px",
+          borderRadius: "12px",
+          background: "#111",
+          display: "block",
+          marginBottom: "12px"
+        }}
+      />
+
+      <button
+        type="button"
+        className="btn btn-primary"
+        onClick={capturePhoto}
+      >
+        Capture Photo
+      </button>
+
+      <button
+        type="button"
+        className="btn"
+        onClick={stopCamera}
+        style={{ marginLeft: "8px" }}
+      >
+        Cancel
+      </button>
+    </div>
+  )}
+
+  {photoData && (
+    <div>
+      <img
+        src={photoData}
+        alt="Captured issue"
+        style={{
+          width: "100%",
+          maxWidth: "420px",
+          borderRadius: "12px",
+          display: "block",
+          marginBottom: "12px"
+        }}
+      />
+
+      <button
+        type="button"
+        className="btn btn-primary"
+        onClick={() => {
+          setPhotoData("");
+          openCamera();
+        }}
+      >
+        Retake Photo
+      </button>
+
+      <button
+        type="button"
+        className="btn"
+        onClick={() => setPhotoData("")}
+        style={{ marginLeft: "8px" }}
+      >
+        Remove Photo
+      </button>
+    </div>
+  )}
+</div>
+
 
                 <button className="btn submit" type="submit" disabled={!verified || loading}>
                   {loading ? "Submitting…" : "Submit your priority →"}
