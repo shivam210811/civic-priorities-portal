@@ -91,8 +91,18 @@ export const verifyOTP = (mobile, otp) =>
   });
 
 // Submit Form
-export const submitSubmission = (formData) =>
-  postData({
+export const submitSubmission = async (formData) => {
+  console.log(
+    "FINAL DATA GOING TO BACKEND:",
+    JSON.stringify(formData, null, 2)
+  );
+
+  const result = await postData({
     action: "submitSubmission",
     ...formData,
   });
+
+  console.log("BACKEND RESPONSE:", result);
+
+  return result;
+};

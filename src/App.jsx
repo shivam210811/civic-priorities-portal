@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import Howwork from "./Howwork.jsx";
 import logo from './assets/cn.png';
 import "sweetalert2/dist/sweetalert2.min.css";
+import LocationPicker from "./LocationPicker.jsx";
 
 import {
   getCategories,
@@ -683,6 +684,30 @@ button, input, select, textarea { font: inherit; }
   *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.01ms !important; }
 }
 
+/* OpenStreetMap issue-location picker */
+.location-picker { width: 100%; }
+.location-search-row { display: grid; grid-template-columns: 1fr auto; gap: 9px; }
+.location-current-btn { white-space: nowrap; padding: 11px 14px; }
+.location-map-wrap { margin-top: 12px; overflow: hidden; border: 1px solid #dce6e5; border-radius: 11px; z-index: 0; }
+.location-map-wrap .leaflet-container { font-family: 'DM Sans', sans-serif; z-index: 0; }
+.location-results { margin-top: 6px; border: 1px solid #dce6e5; border-radius: 9px; overflow: hidden; background: #fff; box-shadow: 0 8px 20px #173f4a12; }
+.location-results button { width: 100%; display: flex; gap: 10px; align-items: flex-start; text-align: left; border: 0; border-bottom: 1px solid #edf1f1; background: #fff; color: #29434e; padding: 11px 12px; cursor: pointer; font-size: 12px; line-height: 1.5; }
+.location-results button:last-child { border-bottom: 0; }
+.location-results button:hover { background: #f0f8f6; }
+.location-hint { color: #71838a; font-size: 11px; line-height: 1.6; margin: 7px 0 0; }
+.location-intro { margin: -2px 0 10px; font-size: 12px; }
+.location-error { color: #bf4b42; font-size: 12px; margin: 7px 0; }
+.location-selected { display: grid; gap: 6px; margin-top: 11px; padding: 13px; border-radius: 10px; background: #eff8f5; border: 1px solid #d7eee6; color: #244b4a; font-size: 12px; overflow-wrap: anywhere; }
+.location-selected small { color: #617c7b; }
+.location-selected a { color: #087f77; font-weight: 700; text-decoration: none; }
+.location-clear { justify-self: start; border: 0; padding: 4px 0; color: #a33d35; background: transparent; font-size: 11px; cursor: pointer; }
+@media(max-width:520px) {
+  .location-search-row { grid-template-columns: 1fr; }
+  .location-current-btn { width: 100%; }
+  .location-map-wrap .leaflet-container { height: 270px !important; }
+}
+
+
 `;
 
 // Convert common API response wrappers into an array.
@@ -761,6 +786,10 @@ const cameraStreamRef = useRef(null);
 const [cameraOpen, setCameraOpen] = useState(false);
 const [photoData, setPhotoData] = useState("");
 const [cameraLoading, setCameraLoading] = useState(false);
+const [photoCaptureLoading, setPhotoCaptureLoading] = useState(false);
+const [photoLocation, setPhotoLocation] = useState(null);
+const [photoCapturedAt, setPhotoCapturedAt] = useState("");
+const [selectedIssueLocation, setSelectedIssueLocation] = useState(null);
 
 const stopCamera = () => {
   if (cameraStreamRef.current) {
@@ -806,7 +835,35 @@ const openCamera = async () => {
   }
 };
 
-const capturePhoto = () => {
+// Get the device's current GPS coordinates.
+const getCurrentGPSLocation = () => {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Location is not supported by this browser."));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      resolve,
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          reject(new Error("Please allow location permission to capture a geotagged photo."));
+        } else if (error.code === error.TIMEOUT) {
+          reject(new Error("Location request timed out. Please try capturing the photo again."));
+        } else {
+          reject(new Error("Unable to get your location. Please check your device GPS."));
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 0
+      }
+    );
+  });
+};
+
+const capturePhoto = async () => {
   const video = videoRef.current;
 
   if (!video || !video.videoWidth) {
@@ -814,17 +871,77 @@ const capturePhoto = () => {
     return;
   }
 
-  const canvas = document.createElement("canvas");
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
+  try {
+    setPhotoCaptureLoading(true);
 
-  const context = canvas.getContext("2d");
-  context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // Location and capture time are recorded at the moment of photo capture.
+    const position = await getCurrentGPSLocation();
+    const latitude = Number(position.coords.latitude.toFixed(6));
+    const longitude = Number(position.coords.longitude.toFixed(6));
+    const capturedAt = new Date().toISOString();
+    const localDateTime = new Date(capturedAt).toLocaleString("en-IN");
 
-  const image = canvas.toDataURL("image/jpeg", 0.75);
+    const mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
 
-  setPhotoData(image);
-  stopCamera();
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+      throw new Error("Unable to process the captured photo.");
+    }
+
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Add a visible geotag watermark at the bottom of the photo.
+    const panelHeight = Math.max(100, Math.round(canvas.height * 0.16));
+    const padding = Math.max(12, Math.round(canvas.width * 0.025));
+    const fontSize = Math.max(14, Math.round(canvas.width * 0.025));
+
+    context.fillStyle = "rgba(0, 0, 0, 0.72)";
+    context.fillRect(
+      0,
+      canvas.height - panelHeight,
+      canvas.width,
+      panelHeight
+    );
+
+    context.fillStyle = "#ffffff";
+    context.textBaseline = "top";
+    context.font = `bold ${fontSize}px Arial`;
+    context.fillText(
+      `GPS: ${latitude}, ${longitude}`,
+      padding,
+      canvas.height - panelHeight + 15
+    );
+
+    context.font = `${fontSize}px Arial`;
+    context.fillText(
+      `Date & Time: ${localDateTime}`,
+      padding,
+      canvas.height - panelHeight + 15 + fontSize + 10
+    );
+
+    const watermarkedPhoto = canvas.toDataURL("image/jpeg", 0.75);
+
+    setPhotoData(watermarkedPhoto);
+    setPhotoLocation({
+      latitude,
+      longitude,
+      mapsLink
+    });
+    setPhotoCapturedAt(capturedAt);
+
+    stopCamera();
+  } catch (error) {
+    showMessage(
+      error?.message || "Unable to capture a geotagged photo. Please try again.",
+      "error"
+    );
+  } finally {
+    setPhotoCaptureLoading(false);
+  }
 };
 
 useEffect(() => {
@@ -1103,14 +1220,20 @@ const showMessage = (text, type = "success") => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    console.log("LOCATION DATA:", {
+  selectedLocationAddress: selectedIssueLocation?.address,
+  selectedLocationLatitude: selectedIssueLocation?.latitude,
+  selectedLocationLongitude: selectedIssueLocation?.longitude,
+  selectedLocationMapLink: selectedIssueLocation?.mapsLink,
+});
 
     if (!verified) {
       showMessage("Please verify your mobile number before submitting.", "error");
       return;
     }
 
-    if (!district || !constituency || !category || !subcategory || !description.trim()) {
-      showMessage("Please complete all required fields.", "error");
+    if (!district || !constituency || !category || !subcategory || !description.trim() || !selectedIssueLocation) {
+      showMessage("Please complete all required fields and select the issue location on the map.", "error");
       return;
     }
 
@@ -1125,6 +1248,14 @@ const showMessage = (text, type = "success") => {
   description: description.trim(),
   language,
   photoData: photoData,
+  latitude: photoLocation?.latitude ?? "",
+  longitude: photoLocation?.longitude ?? "",
+  mapsLink: photoLocation?.mapsLink ?? "",
+  photoCapturedAt: photoCapturedAt || "",
+  selectedLocationAddress: selectedIssueLocation?.address || "",
+  selectedLocationLatitude: selectedIssueLocation?.latitude ?? "",
+  selectedLocationLongitude: selectedIssueLocation?.longitude ?? "",
+  selectedLocationMapLink: selectedIssueLocation?.mapsLink || "",
 };
 
       const response = await submitSubmission(payload);
@@ -1151,7 +1282,10 @@ const showMessage = (text, type = "success") => {
       setOtpSent(false);
       setVerified(false);
       setPhotoData("");
-stopCamera();
+      setPhotoLocation(null);
+      setPhotoCapturedAt("");
+      setSelectedIssueLocation(null);
+      stopCamera();
     } catch (error) {
       showMessage(
         error?.message || "Unable to submit your response. Please try again.",
@@ -1522,6 +1656,18 @@ stopCamera();
                   </div>
                 </div>
 
+                <div className="form-group issue-location-group">
+                  <label>Location of the issue *</label>
+                  <p className="location-hint location-intro">
+                    Select where the civic issue is located. You can use GPS, search for an address, or choose a point directly on the map.
+                  </p>
+                  <LocationPicker
+                    value={selectedIssueLocation}
+                    onChange={setSelectedIssueLocation}
+                    disabled={!verified}
+                  />
+                </div>
+
                 <div className="form-group">
                   <label htmlFor="description">Describe your concern or suggestion *</label>
                   <textarea
@@ -1570,8 +1716,9 @@ stopCamera();
         type="button"
         className="btn btn-primary"
         onClick={capturePhoto}
+        disabled={photoCaptureLoading}
       >
-        Capture Photo
+        {photoCaptureLoading ? "Capturing GPS & Photo..." : "Capture Photo"}
       </button>
 
       <button
@@ -1599,11 +1746,25 @@ stopCamera();
         }}
       />
 
+      {photoLocation && (
+        <p className="status" style={{ marginTop: "8px" }}>
+          📍 GPS: {photoLocation.latitude}, {photoLocation.longitude}
+          {" · "}
+          <a href={photoLocation.mapsLink} target="_blank" rel="noreferrer">
+            View location on Google Maps
+          </a>
+          <br />
+          🕒 Captured: {new Date(photoCapturedAt).toLocaleString("en-IN")}
+        </p>
+      )}
+
       <button
         type="button"
         className="btn btn-primary"
         onClick={() => {
           setPhotoData("");
+          setPhotoLocation(null);
+          setPhotoCapturedAt("");
           openCamera();
         }}
       >
@@ -1613,7 +1774,11 @@ stopCamera();
       <button
         type="button"
         className="btn"
-        onClick={() => setPhotoData("")}
+        onClick={() => {
+          setPhotoData("");
+          setPhotoLocation(null);
+          setPhotoCapturedAt("");
+        }}
         style={{ marginLeft: "8px" }}
       >
         Remove Photo
